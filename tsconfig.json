@@ -27,6 +27,7 @@
 	},
 	"compileOnSave": true,
 	"include": ["./app"],
+	"exclude": ["./app/test.ts"],
 	"ts-node": {
 		"compilerOptions": {
 			"alwaysStrict": true,
