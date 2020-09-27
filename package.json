@@ -5,5 +5,8 @@
   "main": "app/index.js",
   "repository": "https://github.com/SanderRonde/prettier-plugin-sort-imports.git",
   "author": "Sander Ronde <awsdfgvhbjn@gmail.com>",
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^14.11.2"
+  }
 }
