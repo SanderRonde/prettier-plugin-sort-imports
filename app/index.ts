@@ -28,14 +28,36 @@ function findImportBlocks(file: ts.SourceFile) {
 	return blocks;
 }
 
-function sortBlock(block: ts.ImportDeclaration[]) {
-	// TODO:
+function sortBlock(block: ts.ImportDeclaration[], fullText: string): string {
+	const sorted = [...block].sort((a, b) => {
+		const aLength = a.getText().length;
+		const bLength = b.getText().length;
+		if (aLength === bLength && a.importClause && b.importClause) {
+			return (
+				b.importClause.getText().length -
+				a.importClause.getText().length
+			);
+		}
+		return bLength - aLength;
+	});
+
+	for (let i = sorted.length - 1; i >= 0; i--) {
+		if (sorted[i] !== block[i]) {
+			const currentStatement = block[i];
+			fullText =
+				fullText.slice(0, currentStatement.getStart()) +
+				sorted[i].getText() +
+				fullText.slice(currentStatement.getEnd());
+		}
+	}
+
+	return fullText;
 }
 
 /**
  * Organize the imports
  */
-const sortImports = (text: string, options: Options) => {
+function sortImports(text: string, options: Options) {
 	if (text.includes('// sort-imports-ignore')) {
 		return text;
 	}
@@ -49,28 +71,16 @@ const sortImports = (text: string, options: Options) => {
 		true,
 		ts.ScriptKind.TS
 	);
-	const blocks = findImportBlocks(file);
-	console.log(blocks);
 
-	console.log('testing');
+	const blocks = findImportBlocks(file).reverse();
+	for (const block of blocks) {
+		text = sortBlock(block, text);
+	}
+
 	return text;
-};
+}
 
-/**
- * Apply the given set of changes to the text input.
- *
- * @param {string} input
- * @param {ts.TextChange[]} changes set of text changes
- */
-const applyChanges = (input: string, changes: ts.TextChange[]) =>
-	changes.reduceRight((text, change) => {
-		const head = text.slice(0, change.span.start);
-		const tail = text.slice(change.span.start + change.span.length);
-
-		return `${head}${change.newText}${tail}`;
-	}, input);
-
-exports.parsers = {
+export const parsers = {
 	typescript: {
 		...typescriptParsers.typescript,
 		preprocess: typescriptParsers.typescript.preprocess
