@@ -164,3 +164,23 @@ test('sorts by import length if full length is the same', (t) => {
 
 	t.is(transform(input, {}), expected);
 });
+test('skips files containing the ignore string', (t) => {
+	const objArr = [
+		{
+			importPath: 'a',
+			statement: 'a',
+		},
+		{
+			importPath: 'abc',
+			statement: 'abcd',
+		},
+		{
+			importPath: 'abc',
+			statement: 'abcd',
+		},
+	];
+	
+	const input = '// sort-imports-ignore' + createImports(objArr);
+
+	t.is(transform(input, {}), input);
+});
