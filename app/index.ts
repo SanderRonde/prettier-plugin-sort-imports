@@ -58,7 +58,7 @@ function sortBlock(block: ts.ImportDeclaration[], fullText: string): string {
  * Organize the imports
  */
 function sortImports(text: string, options: Options) {
-	if (text.includes('// sort-imports-ignore')) {
+	if (text.includes('// sort-imports-ignore') || text.includes('//sort-imports-ignore')) {
 		return text;
 	}
 
