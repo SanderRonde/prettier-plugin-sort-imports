@@ -26,7 +26,7 @@
 		"checkJs": false
 	},
 	"compileOnSave": true,
-	"include": ["./app"],
+	"include": ["./app", "./test"],
 	"exclude": ["./app/test.ts"],
 	"ts-node": {
 		"compilerOptions": {
