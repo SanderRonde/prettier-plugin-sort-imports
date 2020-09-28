@@ -19,6 +19,7 @@
 		"app/**/*.js"
 	],
 	"scripts": {
-		"test": "ava"
+		"test": "ava",
+		"prepack": "tsc"
 	}
 }
