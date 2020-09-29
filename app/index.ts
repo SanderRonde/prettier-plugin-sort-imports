@@ -2,6 +2,16 @@ import { parsers as typescriptParsers } from 'prettier/parser-typescript';
 import { Options, ParserOptions } from 'prettier';
 import * as ts from 'typescript';
 
+function countChar(str: string, char: string) {
+	let count: number = 0;
+	while (str.includes(char)) {
+		count++;
+		let index = str.indexOf(char);
+		str = str.slice(0, index) + str.slice(index + 1);
+	}
+	return count;
+}
+
 // Find all "blocks" of imports. These are just lines of imports
 // without any newlines between them
 function findImportBlocks(file: ts.SourceFile) {
@@ -15,7 +25,30 @@ function findImportBlocks(file: ts.SourceFile) {
 	for (const child of rootChildren) {
 		if (ts.isImportDeclaration(child)) {
 			if (lastDeclaration) {
-				if (lastDeclaration.getEnd() + 1 !== child.getStart()) {
+				let startIndex: number = child.getStart();
+				let endIndex: number = lastDeclaration.getEnd();
+				const leadingComments = ts.getLeadingCommentRanges(
+					file.getFullText(),
+					child.getFullStart()
+				);
+				const trailingComments = ts.getTrailingCommentRanges(
+					file.getFullText(),
+					lastDeclaration.getEnd()
+				);
+				if (leadingComments && leadingComments.length) {
+					// Has comments before it
+					startIndex = leadingComments[0].pos;
+				}
+				if (trailingComments && trailingComments.length) {
+					endIndex =
+						trailingComments[trailingComments.length - 1].end;
+				}
+				if (
+					countChar(
+						file.getFullText().slice(endIndex, startIndex),
+						'\n'
+					) > 1
+				) {
 					// New block
 					blocks.push([]);
 				}
@@ -58,7 +91,10 @@ function sortBlock(block: ts.ImportDeclaration[], fullText: string): string {
  * Organize the imports
  */
 function sortImports(text: string, options: Options) {
-	if (text.includes('// sort-imports-ignore') || text.includes('//sort-imports-ignore')) {
+	if (
+		text.includes('// sort-imports-ignore') ||
+		text.includes('//sort-imports-ignore')
+	) {
 		return text;
 	}
 
