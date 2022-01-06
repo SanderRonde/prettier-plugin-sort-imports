@@ -1,5 +1,7 @@
 import { parsers as typescriptParsers } from 'prettier/parser-typescript';
-import { Options, ParserOptions } from 'prettier';
+import { sortBlockAlphabetically } from './sorters/alphabetical';
+import { PrettierOptions, SORTING_TYPE } from './types';
+import { sortBlockByLength } from './sorters/by-length';
 import * as ts from 'typescript';
 
 function countChar(str: string, char: string) {
@@ -61,18 +63,15 @@ function findImportBlocks(file: ts.SourceFile) {
 	return blocks;
 }
 
-function sortBlock(block: ts.ImportDeclaration[], fullText: string): string {
-	const sorted = [...block].sort((a, b) => {
-		const aLength = a.getText().length;
-		const bLength = b.getText().length;
-		if (aLength === bLength && a.importClause && b.importClause) {
-			return (
-				b.importClause.getText().length -
-				a.importClause.getText().length
-			);
-		}
-		return bLength - aLength;
-	});
+function sortBlock(
+	block: ts.ImportDeclaration[],
+	fullText: string,
+	options: PrettierOptions
+): string {
+	const sorted =
+		options.sortingMethod === SORTING_TYPE.ALPHABETICAL
+			? sortBlockAlphabetically(block)
+			: sortBlockByLength(block);
 
 	for (let i = sorted.length - 1; i >= 0; i--) {
 		if (sorted[i] !== block[i]) {
@@ -90,7 +89,7 @@ function sortBlock(block: ts.ImportDeclaration[], fullText: string): string {
 /**
  * Organize the imports
  */
-function sortImports(text: string, options: Options) {
+function sortImports(text: string, options: PrettierOptions) {
 	if (
 		text.includes('// sort-imports-ignore') ||
 		text.includes('//sort-imports-ignore')
@@ -105,12 +104,12 @@ function sortImports(text: string, options: Options) {
 		text,
 		ts.ScriptTarget.Latest,
 		true,
-		ts.ScriptKind.TS
+		fileName.endsWith('tsx') ? ts.ScriptKind.TSX : ts.ScriptKind.TS
 	);
 
 	const blocks = findImportBlocks(file).reverse();
 	for (const block of blocks) {
-		text = sortBlock(block, text);
+		text = sortBlock(block, text, options);
 	}
 
 	return text;
@@ -120,12 +119,32 @@ export const parsers = {
 	typescript: {
 		...typescriptParsers.typescript,
 		preprocess: typescriptParsers.typescript.preprocess
-			? (text: string, options: ParserOptions) => {
+			? (text: string, options: PrettierOptions) => {
 					return sortImports(
 						typescriptParsers.typescript.preprocess!(text, options),
 						options
 					);
 			  }
 			: sortImports,
+	},
+};
+
+export const options = {
+	sortingMethod: {
+		since: '1.15.0',
+		category: 'Global',
+		type: 'choice',
+		default: SORTING_TYPE.LINE_LENGTH,
+		description: 'Which sorting method to use',
+		choices: [
+			{
+				value: SORTING_TYPE.ALPHABETICAL,
+				description: 'Sort imports alphabetically by the import path',
+			},
+			{
+				value: SORTING_TYPE.LINE_LENGTH,
+				description: 'Sort by line length, descending',
+			},
+		],
 	},
 };
