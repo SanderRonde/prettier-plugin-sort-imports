@@ -52,7 +52,23 @@ function sortArr(
 	});
 }
 
-test('sorts a single block of imports', (t) => {
+function sortArrAlphabetically(
+	imports: {
+		statement: string;
+		importPath: string;
+	}[]
+) {
+	return [...imports].sort((a, b) => {
+		if (a.importPath < b.importPath) {
+			return -1;
+		} else if (a.importPath > b.importPath) {
+			return 1;
+		}
+		return 0
+	});
+}
+
+test('sorts a single block of imports by length', (t) => {
 	const objArr = [
 		{
 			importPath: 'a',
@@ -75,6 +91,30 @@ test('sorts a single block of imports', (t) => {
 	const expected = createImports(sortArr(objArr));
 
 	t.is(transform(input, {}), expected);
+});
+test('sorts a single block of imports alphabetically', (t) => {
+	const objArr = [
+		{
+			importPath: 'd',
+			statement: 'a',
+		},
+		{
+			importPath: 'c',
+			statement: 'ab',
+		},
+		{
+			importPath: 'a',
+			statement: 'abc',
+		},
+		{
+			importPath: 'b',
+			statement: 'abcd',
+		},
+	];
+	const input = createImports(objArr);
+	const expected = createImports(sortArrAlphabetically(objArr));
+
+	t.is(transform(input, {sortingMethod: 'alphabetical'}), expected);
 });
 test('sorts multiple blocks', (t) => {
 	const block1 = [
