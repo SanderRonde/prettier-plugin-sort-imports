@@ -197,6 +197,10 @@ function sortBlock(
 	fullText: string,
 	options: PrettierOptions
 ): string {
+	if (block.length === 0) {
+		return fullText;
+	}
+
 	const sorted =
 		options.sortingMethod === SORTING_TYPE.ALPHABETICAL
 			? sortBlockAlphabetically(block)
