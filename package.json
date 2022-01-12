@@ -2,7 +2,7 @@
 	"name": "prettier-plugin-sort-imports",
 	"version": "1.2.0",
 	"description": "A prettier plugin for sorting imports by length",
-	"main": "app/index.js",
+	"main": "dist/index.js",
 	"repository": "https://github.com/SanderRonde/prettier-plugin-sort-imports.git",
 	"author": "Sander Ronde <awsdfgvhbjn@gmail.com>",
 	"license": "MIT",
