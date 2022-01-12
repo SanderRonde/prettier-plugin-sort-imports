@@ -25,8 +25,9 @@ function createImports(
 	);
 }
 
-const CHARS =
-	'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890'.split('');
+const CHARS = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890'.split(
+	''
+);
 function genRandomString(length: number) {
 	let str: string = '';
 	for (let i = 0; i < length; i++) {
@@ -370,4 +371,29 @@ import {} from 'aaa';
 import {} from 'aa';
 import {} from 'a';`;
 	t.is(transform(input, { stripNewlines: true }), expected);
+});
+test('can ignore blocks', (t) => {
+	const input = `import {} from 'a';
+import {} from 'aa';
+// sort-imports-begin-ignore
+import {} from 'bbb';
+import {} from 'bbbb';
+import {} from 'b';
+// sort-imports-end-ignore
+import {} from 'aa';
+import {} from 'aaa';
+import {} from 'aaaa';
+import {} from 'aaaaa';`;
+	const expected = `import {} from 'aa';
+import {} from 'a';
+// sort-imports-begin-ignore
+import {} from 'bbb';
+import {} from 'bbbb';
+import {} from 'b';
+// sort-imports-end-ignore
+import {} from 'aaaaa';
+import {} from 'aaaa';
+import {} from 'aaa';
+import {} from 'aa';`;
+	t.is(transform(input, {}), expected);
 });

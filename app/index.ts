@@ -5,7 +5,7 @@ import { sortBlockByLength } from './sorters/by-length';
 import * as ts from 'typescript';
 import { ParserOptions } from 'prettier';
 
-function countChar(str: string, char: string) {
+function countStringAppearances(str: string, char: string) {
 	let count: number = 0;
 	while (str.includes(char)) {
 		count++;
@@ -63,7 +63,7 @@ function getImportRanges(
 		start--;
 	}
 	const leadingComment = getFirstLeadingComment(fullText, tsImport);
-	if (leadingComment) {
+	if (leadingComment && !commentIsIgnoreComment(fullText, leadingComment)) {
 		start = leadingComment.pos - 1;
 	}
 
@@ -71,7 +71,11 @@ function getImportRanges(
 	const prevLastComment =
 		lastBlockChild &&
 		getLastTrailingComment(fullText, lastBlockChild.import);
-	if (lastBlockChild && prevLastComment) {
+	if (
+		lastBlockChild &&
+		prevLastComment &&
+		!commentIsIgnoreComment(fullText, prevLastComment)
+	) {
 		start =
 			prevLastComment.end +
 			~~(prevLastComment.hasTrailingNewLine ?? false);
@@ -91,11 +95,38 @@ function getImportRanges(
 	};
 }
 
+function isInRange(
+	start: number,
+	end: number,
+	ranges: IgnoredRange[]
+): boolean {
+	for (const range of ranges) {
+		if (
+			(end >= range.start && end < range.end) ||
+			(start >= range.start && start < range.end)
+		) {
+			return true;
+		}
+	}
+	return false;
+}
+
+function commentIsIgnoreComment(
+	text: string,
+	comment: ts.CommentRange
+): boolean {
+	const commentText = text.slice(comment.pos, comment.end);
+	return (
+		commentText.includes(IGNORE_BEGIN) || commentText.includes(IGNORE_END)
+	);
+}
+
 // Find all "blocks" of imports. These are just lines of imports
 // without any newlines between them
 function findImportBlocks(
 	file: ts.SourceFile,
-	stripNewlines: boolean
+	stripNewlines: boolean,
+	ignoredRanges: IgnoredRange[]
 ): ImportBlock[] {
 	const blocks: ImportBlock[] = [[]];
 	const rootChildren =
@@ -122,12 +153,20 @@ function findImportBlocks(
 					startIndex = leadingComments[0].pos;
 				}
 				if (trailingComments && trailingComments.length) {
-					endIndex =
-						trailingComments[trailingComments.length - 1].end;
+					const lastTrailingComment =
+						trailingComments[trailingComments.length - 1];
+					endIndex = lastTrailingComment.end;
 				}
 				const textBetween = file
 					.getFullText()
 					.slice(endIndex, startIndex);
+
+				if (isInRange(startIndex, child.getEnd(), ignoredRanges)) {
+					// Ignore this
+					blocks.push([]);
+					lastDeclaration = child;
+					continue;
+				}
 
 				if (stripNewlines) {
 					if (
@@ -142,7 +181,7 @@ function findImportBlocks(
 					}
 					// By just ignoring the newlines and not re-printing them
 					// we're getting rid of them
-				} else if (countChar(textBetween, '\n') > 1) {
+				} else if (countStringAppearances(textBetween, '\n') > 1) {
 					// New block
 					blocks.push([]);
 				}
@@ -154,7 +193,7 @@ function findImportBlocks(
 		}
 	}
 
-	return blocks;
+	return blocks.filter((block) => block.length > 0);
 }
 
 function transformLines(lines: string[], stripNewlines: boolean): string[] {
@@ -233,14 +272,113 @@ function sortBlock(
 	);
 }
 
+interface IgnoredRange {
+	start: number;
+	end: number;
+}
+
+const IGNORE_BEGIN = 'sort-imports-begin-ignore';
+const IGNORE_BEGIN_COMMENTS = [`//${IGNORE_BEGIN}`, `// ${IGNORE_BEGIN}`];
+const IGNORE_END = 'sort-imports-end-ignore';
+const IGNORE_END_COMMENTS = [`//${IGNORE_END}`, `// ${IGNORE_END}`];
+
+function getIndexOfAny(text: string, options: string[]): number {
+	for (const option of options) {
+		const index = text.indexOf(option);
+		if (index !== -1) {
+			return index;
+		}
+	}
+	return -1;
+}
+
+function checkIgnoreCounts(
+	fileName: string | undefined,
+	text: string
+): boolean {
+	const ignoreStartCount = IGNORE_BEGIN_COMMENTS.reduce(
+		(prev, cmt) => prev + countStringAppearances(text, cmt),
+		0
+	);
+	const ignoreEndCount = IGNORE_END_COMMENTS.reduce(
+		(prev, cmt) => prev + countStringAppearances(text, cmt),
+		0
+	);
+	if (ignoreStartCount !== ignoreEndCount) {
+		console.warn(
+			`Number of ignore begin and end comments do not match in file "${
+				fileName ?? 'input'
+			}". Found ${ignoreStartCount} begin comments and ${ignoreEndCount} end comments. Skipping file`
+		);
+		return false;
+	}
+	return true;
+}
+
+function lineAt(text: string, offset: number): number {
+	const lines = text.split('\n');
+	let currentOffset = 0;
+	for (let i = 0; i < lines.length; i++) {
+		const lineLength = lines[i].length;
+		if (currentOffset + lineLength > offset) {
+			return i;
+		}
+		currentOffset += lineLength;
+	}
+	return -1;
+}
+
+function getIgnoredRanges(text: string): IgnoredRange[] | null {
+	const ranges: IgnoredRange[] = [];
+	if (getIndexOfAny(text, IGNORE_BEGIN_COMMENTS) === -1) {
+		return [];
+	}
+
+	const originalText = text;
+	let offset = 0;
+	let beginIndex: number;
+	while ((beginIndex = getIndexOfAny(text, IGNORE_BEGIN_COMMENTS)) !== -1) {
+		const rangeStart = offset + beginIndex;
+		offset = offset + beginIndex + IGNORE_BEGIN_COMMENTS[0].length;
+		text = text.slice(offset);
+		const endIndex = getIndexOfAny(text, IGNORE_END_COMMENTS);
+
+		if (endIndex === -1) {
+			console.warn(
+				`Failed to find end ignore comment for ignore begin comment on line ${lineAt(
+					originalText,
+					rangeStart
+				)}, ignoring file`
+			);
+			return null;
+		}
+
+		ranges.push({
+			start: rangeStart,
+			end: offset + endIndex,
+		});
+
+		offset = offset + endIndex + IGNORE_END_COMMENTS[0].length;
+		text = text.slice(offset);
+	}
+
+	return ranges;
+}
+
 /**
  * Organize the imports
  */
 function sortImports(text: string, options: PrettierOptions) {
 	if (
 		text.includes('// sort-imports-ignore') ||
-		text.includes('//sort-imports-ignore')
+		text.includes('//sort-imports-ignore') ||
+		!checkIgnoreCounts(options.filepath, text)
 	) {
+		return text;
+	}
+
+	const ignoredRanges = getIgnoredRanges(text);
+	if (ignoredRanges === null) {
 		return text;
 	}
 
@@ -254,7 +392,11 @@ function sortImports(text: string, options: PrettierOptions) {
 		fileName.endsWith('tsx') ? ts.ScriptKind.TSX : ts.ScriptKind.TS
 	);
 
-	const blocks = findImportBlocks(file, options.stripNewlines).reverse();
+	const blocks = findImportBlocks(
+		file,
+		options.stripNewlines,
+		ignoredRanges
+	).reverse();
 	for (const block of blocks) {
 		text = sortBlock(block, text, options);
 	}
