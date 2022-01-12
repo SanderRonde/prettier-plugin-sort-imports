@@ -347,3 +347,27 @@ test('leaves other comments in the file alone', (t) => {
 
 	t.is(transform(input, {}), expected);
 });
+test('does not introduce unneeded spacing', (t) => {
+	const input = `import {} from 'a';
+import {} from 'aa';
+import {} from 'aaa';
+import {} from 'aaaa';
+console.log('code between');
+import {} from 'a';
+import {} from 'aa';
+import {} from 'aaa';
+import {} from 'aaaa';
+
+import {} from 'aaaaa';`;
+	const expected = `import {} from 'aaaa';
+import {} from 'aaa';
+import {} from 'aa';
+import {} from 'a';
+console.log('code between');
+import {} from 'aaaaa';
+import {} from 'aaaa';
+import {} from 'aaa';
+import {} from 'aa';
+import {} from 'a';`;
+	t.is(transform(input, { stripNewlines: true }), expected);
+});

@@ -165,8 +165,8 @@ function transformLines(lines: string[], stripNewlines: boolean): string[] {
 			}
 			return b;
 		})
-		.map((b, i) => {
-			if (stripNewlines && i !== 0) {
+		.map((b) => {
+			if (stripNewlines) {
 				while (b.startsWith('\n')) {
 					b = b.slice(1);
 				}
