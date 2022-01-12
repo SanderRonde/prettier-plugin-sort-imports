@@ -3,6 +3,7 @@ import { sortBlockAlphabetically } from './sorters/alphabetical';
 import { PrettierOptions, SORTING_TYPE } from './types';
 import { sortBlockByLength } from './sorters/by-length';
 import * as ts from 'typescript';
+import { ParserOptions } from 'prettier';
 
 function countChar(str: string, char: string) {
 	let count: number = 0;
@@ -14,10 +15,89 @@ function countChar(str: string, char: string) {
 	return count;
 }
 
+type SingleImport = {
+	import: ts.ImportDeclaration;
+	start: number;
+	end: number;
+};
+
+export type ImportBlock = SingleImport[];
+
+function getLastTrailingComment(
+	fullText: string,
+	tsImport: ts.ImportDeclaration
+) {
+	const comments = ts.getTrailingCommentRanges(
+		fullText,
+		tsImport.getFullStart() + tsImport.getFullWidth()
+	);
+	if (!comments) {
+		return null;
+	}
+	return comments[comments.length - 1];
+}
+
+function getFirstLeadingComment(
+	fullText: string,
+	tsImport: ts.ImportDeclaration
+) {
+	const comments = ts.getLeadingCommentRanges(
+		fullText,
+		tsImport.getFullStart()
+	);
+	if (!comments) {
+		return null;
+	}
+	return comments[0];
+}
+
+function getImportRanges(
+	blocks: ImportBlock[],
+	fullText: string,
+	tsImport: ts.ImportDeclaration
+): SingleImport {
+	const currentBlock = blocks[blocks.length - 1];
+	const index = currentBlock.length;
+	let start = index === 0 ? tsImport.getStart() : tsImport.getFullStart();
+	if (index === 0 && tsImport.getFullStart() !== 0) {
+		start--;
+	}
+	const leadingComment = getFirstLeadingComment(fullText, tsImport);
+	if (leadingComment) {
+		start = leadingComment.pos - 1;
+	}
+
+	const lastBlockChild = currentBlock[currentBlock.length - 1];
+	const prevLastComment =
+		lastBlockChild &&
+		getLastTrailingComment(fullText, lastBlockChild.import);
+	if (lastBlockChild && prevLastComment) {
+		start =
+			prevLastComment.end +
+			~~(prevLastComment.hasTrailingNewLine ?? false);
+	}
+	let end = tsImport.getFullStart() + tsImport.getFullWidth();
+	const lastComment = getLastTrailingComment(fullText, tsImport);
+	if (lastComment) {
+		end = lastComment.end;
+		if (lastComment.hasTrailingNewLine) {
+			end += 1;
+		}
+	}
+	return {
+		import: tsImport,
+		start: Math.max(start, 0),
+		end,
+	};
+}
+
 // Find all "blocks" of imports. These are just lines of imports
 // without any newlines between them
-function findImportBlocks(file: ts.SourceFile) {
-	const blocks: ts.ImportDeclaration[][] = [[]];
+function findImportBlocks(
+	file: ts.SourceFile,
+	stripNewlines: boolean
+): ImportBlock[] {
+	const blocks: ImportBlock[] = [[]];
 	const rootChildren =
 		file.getChildren()[0].kind === ts.SyntaxKind.SyntaxList
 			? file.getChildren()[0].getChildren()
@@ -45,17 +125,31 @@ function findImportBlocks(file: ts.SourceFile) {
 					endIndex =
 						trailingComments[trailingComments.length - 1].end;
 				}
-				if (
-					countChar(
-						file.getFullText().slice(endIndex, startIndex),
-						'\n'
-					) > 1
-				) {
+				const textBetween = file
+					.getFullText()
+					.slice(endIndex, startIndex);
+
+				if (stripNewlines) {
+					if (
+						textBetween
+							.split('')
+							.filter(
+								(c) => c !== '\n' && c !== '\t' && c !== ' '
+							).length > 0
+					) {
+						// non-newlines in between, new block
+						blocks.push([]);
+					}
+					// By just ignoring the newlines and not re-printing them
+					// we're getting rid of them
+				} else if (countChar(textBetween, '\n') > 1) {
 					// New block
 					blocks.push([]);
 				}
 			}
-			blocks[blocks.length - 1].push(child);
+			blocks[blocks.length - 1].push(
+				getImportRanges(blocks, file.getFullText(), child)
+			);
 			lastDeclaration = child;
 		}
 	}
@@ -63,8 +157,43 @@ function findImportBlocks(file: ts.SourceFile) {
 	return blocks;
 }
 
+function transformLines(lines: string[], stripNewlines: boolean): string[] {
+	return lines
+		.map((b) => {
+			if (!b.startsWith('\n')) {
+				return `\n${b}`;
+			}
+			return b;
+		})
+		.map((b, i) => {
+			if (stripNewlines && i !== 0) {
+				while (b.startsWith('\n')) {
+					b = b.slice(1);
+				}
+				return `\n${b}`;
+			}
+			return b;
+		})
+		.map((b) => {
+			if (b.endsWith('\n')) {
+				return b.slice(0, -1);
+			}
+			return b;
+		});
+}
+
+function trimSpaces(line: string) {
+	while (line.startsWith(' ') || line.startsWith('\t')) {
+		line = line.slice(1);
+	}
+	while (line.endsWith(' ') || line.endsWith('\t')) {
+		line = line.slice(0, -1);
+	}
+	return line;
+}
+
 function sortBlock(
-	block: ts.ImportDeclaration[],
+	block: ImportBlock,
 	fullText: string,
 	options: PrettierOptions
 ): string {
@@ -73,17 +202,31 @@ function sortBlock(
 			? sortBlockAlphabetically(block)
 			: sortBlockByLength(block);
 
-	for (let i = sorted.length - 1; i >= 0; i--) {
-		if (sorted[i] !== block[i]) {
-			const currentStatement = block[i];
-			fullText =
-				fullText.slice(0, currentStatement.getStart()) +
-				sorted[i].getText() +
-				fullText.slice(currentStatement.getEnd());
+	let blockText = transformLines(
+		sorted.map((s) => trimSpaces(fullText.slice(s.start, s.end))),
+		options.stripNewlines
+	).join('');
+	const lastBlock = block[block.length - 1];
+	let lastBlockEnd =
+		lastBlock.import.getFullStart() + lastBlock.import.getFullWidth();
+	const trailingComments = ts.getTrailingCommentRanges(
+		fullText,
+		lastBlockEnd
+	);
+	if (trailingComments) {
+		lastBlockEnd = trailingComments[trailingComments.length - 1].end;
+		if (trailingComments[trailingComments.length - 1].hasTrailingNewLine) {
+			lastBlockEnd += 1;
 		}
 	}
-
-	return fullText;
+	if (block[0].import.getFullStart() === 0 && blockText.startsWith('\n')) {
+		blockText = blockText.slice(1);
+	}
+	return (
+		fullText.slice(0, block[0].start) +
+		blockText +
+		fullText.slice(lastBlock.end)
+	);
 }
 
 /**
@@ -107,7 +250,7 @@ function sortImports(text: string, options: PrettierOptions) {
 		fileName.endsWith('tsx') ? ts.ScriptKind.TSX : ts.ScriptKind.TS
 	);
 
-	const blocks = findImportBlocks(file).reverse();
+	const blocks = findImportBlocks(file, options.stripNewlines).reverse();
 	for (const block of blocks) {
 		text = sortBlock(block, text, options);
 	}
@@ -129,7 +272,9 @@ export const parsers = {
 	},
 };
 
-export const options = {
+export const options: {
+	[K in keyof Omit<PrettierOptions, keyof ParserOptions>]: unknown;
+} = {
 	sortingMethod: {
 		since: '1.15.0',
 		category: 'Global',
@@ -146,5 +291,13 @@ export const options = {
 				description: 'Sort by line length, descending',
 			},
 		],
+	},
+	stripNewlines: {
+		since: '1.15.0',
+		category: 'Global',
+		type: 'boolean',
+		default: false,
+		description:
+			'Whether to strip newlines between blocks (joining blocks)',
 	},
 };

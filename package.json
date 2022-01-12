@@ -9,17 +9,33 @@
 	"devDependencies": {
 		"@types/node": "^14.11.2",
 		"@types/prettier": "^2.1.1",
-		"ava": "^3.13.0"
+		"ava": "^3.13.0",
+		"esbuild": "^0.14.11",
+		"swc": "^1.0.11",
+		"ts-node": "^10.4.0"
 	},
 	"dependencies": {
-		"prettier": "^2.1.2",
+		"prettier": "^2.5.1",
 		"typescript": "^4.0.3"
 	},
 	"files": [
-		"app/**/*.js"
+		"dist/**"
 	],
 	"scripts": {
-		"test": "ava",
-		"prepack": "tsc"
+		"bundle": "esbuild --bundle --minify --platform=node --outfile=dist/index.js app/index.ts",
+		"test": "yarn bundle && ava test/test.ts",
+		"prepack": "yarn format && tsc && yarn bundle",
+		"format": "prettier --write app test"
+	},
+	"ava": {
+		"extensions": {
+			"ts": "module"
+		},
+		"nonSemVerExperiments": {
+			"configurableModuleFormat": true
+		},
+		"nodeArguments": [
+			"--loader=ts-node/esm"
+		]
 	}
 }

@@ -1,15 +1,17 @@
-import ts from 'typescript';
+import { ImportBlock } from '..';
 
-export function sortBlockByLength(
-	declarations: ts.ImportDeclaration[]
-): ts.ImportDeclaration[] {
+export function sortBlockByLength(declarations: ImportBlock): ImportBlock {
 	return [...declarations].sort((a, b) => {
-		const aLength = a.getText().length;
-		const bLength = b.getText().length;
-		if (aLength === bLength && a.importClause && b.importClause) {
+		const aLength = a.import.getText().length;
+		const bLength = b.import.getText().length;
+		if (
+			aLength === bLength &&
+			a.import.importClause &&
+			b.import.importClause
+		) {
 			return (
-				b.importClause.getText().length -
-				a.importClause.getText().length
+				b.import.importClause.getText().length -
+				a.import.importClause.getText().length
 			);
 		}
 		return bLength - aLength;

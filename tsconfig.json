@@ -23,11 +23,11 @@
 		"sourceMap": true,
 		"resolveJsonModule": true,
 		"emitDecoratorMetadata": true,
-		"checkJs": false
+		"checkJs": false,
+		"noEmit": true
 	},
 	"compileOnSave": true,
 	"include": ["./app", "./test"],
-	"exclude": ["./app/test.ts"],
 	"ts-node": {
 		"compilerOptions": {
 			"alwaysStrict": true,

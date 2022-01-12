@@ -1,11 +1,11 @@
-import ts from 'typescript';
+import { ImportBlock } from '..';
 
 export function sortBlockAlphabetically(
-	declarations: ts.ImportDeclaration[]
-): ts.ImportDeclaration[] {
+	declarations: ImportBlock
+): ImportBlock {
 	return [...declarations].sort((a, b) => {
-		const aText = a.moduleSpecifier.getText();
-		const bText = b.moduleSpecifier.getText();
+		const aText = a.import.moduleSpecifier.getText();
+		const bText = b.import.moduleSpecifier.getText();
 
 		if (aText < bText) {
 			return -1;
