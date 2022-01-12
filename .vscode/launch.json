@@ -11,11 +11,10 @@
 			"skipFiles": [
 				"<node_internals>/**"
 			],
-			"program": "${workspaceFolder}/node_modules/.bin/prettier",
+			"program": "${workspaceFolder}/test/debug.js",
 			"args": [
-				"app/test.ts",
-				"--plugin=./",
-				"--check"
+				"test/demo.ts",
+				"--strip-newlines"
 			],
 			"outFiles": [
 				"${workspaceFolder}/**/*.js"
