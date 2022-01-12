@@ -8,17 +8,12 @@
 			"type": "node",
 			"request": "launch",
 			"name": "Launch Program",
-			"skipFiles": [
-				"<node_internals>/**"
-			],
-			"program": "${workspaceFolder}/test/debug.js",
-			"args": [
-				"test/demo.ts",
-				"--strip-newlines"
-			],
-			"outFiles": [
-				"${workspaceFolder}/**/*.js"
-			]
+			"skipFiles": ["<node_internals>/**"],
+			"runtimeExecutable": "${workspaceFolder}/node_modules/.bin/ts-node",
+			"program": "${workspaceFolder}/test/debug.ts",
+			"runtimeArgs": ["-T"],
+			"args": ["test/demo.ts", "--strip-newlines"],
+			"outFiles": ["${workspaceFolder}/**/*.js"]
 		}
 	]
 }
