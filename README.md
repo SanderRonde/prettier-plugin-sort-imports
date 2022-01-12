@@ -20,4 +20,4 @@ The plugin will be loaded by Prettier automatically. No configuration needed. It
 * `sortingMethod`: `'alphabetical' | 'lineLength' (default)` - What to sort the individual lines by. `alphabetical` sorts by the import path and `lineLength` sorts by the length of the import. Note that alphabetical sorting looks at the **whole** import path, so imports starting with `../` are ranked lower.
 * `stripNewlines`: `true | false (default)`. Determines whether newlines between blocks of imports are stripped. If the only thing between two blocks is whitespace or comments, the whitespace will be stripped and the blocks are sorted as one big one. The comment sticks to whichever import it was above initially.
 
-Files containing the string `// sort-imports-ignore` are skipped.
+Files containing the string `// sort-imports-ignore` are skipped. You can also ignore sections by using `// sort-imports-begin-ignore` and `// sort-imports-end-ignore`.
