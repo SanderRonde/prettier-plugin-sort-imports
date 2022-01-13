@@ -25,9 +25,8 @@ function createImports(
 	);
 }
 
-const CHARS = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890'.split(
-	''
-);
+const CHARS =
+	'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890'.split('');
 function genRandomString(length: number) {
 	let str: string = '';
 	for (let i = 0; i < length; i++) {

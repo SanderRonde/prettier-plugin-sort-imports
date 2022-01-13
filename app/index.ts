@@ -78,7 +78,7 @@ function getImportRanges(
 	}
 	const leadingComment = getFirstLeadingComment(fullText, tsImport);
 	if (leadingComment && !commentIsIgnoreComment(fullText, leadingComment)) {
-		const lastLeadingComment = getLastLeadingComment(fullText, tsImport)
+		const lastLeadingComment = getLastLeadingComment(fullText, tsImport);
 		if (index !== 0 || start - lastLeadingComment!.end <= 1) {
 			start = leadingComment.pos - 1;
 		}
