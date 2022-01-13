@@ -406,7 +406,7 @@ function sortImports(text: string, options: PrettierOptions) {
 		text,
 		ts.ScriptTarget.Latest,
 		true,
-		fileName.endsWith('tsx') ? ts.ScriptKind.TSX : ts.ScriptKind.TS
+		fileName.endsWith('ts') ? ts.ScriptKind.TS : ts.ScriptKind.TSX
 	);
 
 	const blocks = findImportBlocks(
