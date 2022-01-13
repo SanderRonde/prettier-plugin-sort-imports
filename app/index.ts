@@ -1,4 +1,5 @@
 import { parsers as typescriptParsers } from 'prettier/parser-typescript';
+import { parsers as babelParsers } from 'prettier/parser-babel';
 import { sortBlockAlphabetically } from './sorters/alphabetical';
 import { PrettierOptions, SORTING_TYPE } from './types';
 import { sortBlockByLength } from './sorters/by-length';
@@ -428,6 +429,17 @@ export const parsers = {
 			? (text: string, options: PrettierOptions) => {
 					return sortImports(
 						typescriptParsers.typescript.preprocess!(text, options),
+						options
+					);
+			  }
+			: sortImports,
+	},
+	babel: {
+		...babelParsers.babel,
+		preprocess: babelParsers.babel.preprocess
+			? (text: string, options: PrettierOptions) => {
+					return sortImports(
+						babelParsers.babel.preprocess!(text, options),
 						options
 					);
 			  }
