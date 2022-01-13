@@ -397,3 +397,20 @@ import {} from 'aaa';
 import {} from 'aa';`;
 	t.is(transform(input, {}), expected);
 });
+test('leaves comments above the first import alone if they end with a newline', (t) => {
+	const input = `// Some comment
+
+import {} from 'a';
+import {} from 'aa';
+import {} from 'aaa';
+import {} from 'aaaa';
+import {} from 'aaaaa';`;
+	const expected = `// Some comment
+
+import {} from 'aaaaa';
+import {} from 'aaaa';
+import {} from 'aaa';
+import {} from 'aa';
+import {} from 'a';`;
+	t.is(transform(input, {}), expected);
+});
