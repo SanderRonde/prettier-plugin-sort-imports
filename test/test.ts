@@ -305,16 +305,16 @@ test('skips files containing the ignore string', (t) => {
 	t.is(transform(input, defaultOptions), input);
 });
 test('comments above imports stick to that import', (t) => {
-	const block = `// some comment here
-import a from 'a';
+	const block = `import a from 'a';
 import ab from 'ab'; 
+// some comment here
 import abc from 'abc';
 import abcd from 'abcd';`;
 
 	const blockExpected = `import abcd from 'abcd';
+// some comment here
 import abc from 'abc';
 import ab from 'ab';
-// some comment here
 import a from 'a';`;
 
 	t.is(transform(block, defaultOptions), blockExpected);
@@ -334,16 +334,16 @@ test('moves comments along if there are multiple blocks', (t) => {
 			statement: 'abcd',
 		},
 	];
-	const block2 = `// some comment here
-import a from 'a';
+	const block2 = `import a from 'a';
 import ab from 'ab'; // some trailing comment here
-import abc from 'abc';	
+import abc from 'abc';
+// some comment here
 import abcd from 'abcd';`;
 
-	const block2Expected = `import abcd from 'abcd';
+	const block2Expected = `// some comment here
+import abcd from 'abcd';
 import abc from 'abc';
 import ab from 'ab'; // some trailing comment here
-// some comment here
 import a from 'a';`;
 
 	const input = createImports(block1) + '\n\n\n' + block2;
@@ -426,16 +426,14 @@ import {} from 'aaa';
 import {} from 'aa';`;
 	t.is(transform(input, defaultOptions), expected);
 });
-test('leaves comments above the first import alone if they end with a newline', (t) => {
+test('leaves comments above the first import alone', (t) => {
 	const input = `// Some comment
-
 import {} from 'a';
 import {} from 'aa';
 import {} from 'aaa';
 import {} from 'aaaa';
 import {} from 'aaaaa';`;
 	const expected = `// Some comment
-
 import {} from 'aaaaa';
 import {} from 'aaaa';
 import {} from 'aaa';

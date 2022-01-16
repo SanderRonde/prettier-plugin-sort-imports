@@ -55,20 +55,6 @@ function getFirstLeadingComment(
 	return comments[0];
 }
 
-function getLastLeadingComment(
-	fullText: string,
-	tsImport: ts.ImportDeclaration
-) {
-	const comments = ts.getLeadingCommentRanges(
-		fullText,
-		tsImport.getFullStart()
-	);
-	if (!comments) {
-		return null;
-	}
-	return comments[comments.length - 1];
-}
-
 function getImportRanges(
 	blocks: ImportBlock[],
 	fullText: string,
@@ -82,8 +68,7 @@ function getImportRanges(
 	}
 	const leadingComment = getFirstLeadingComment(fullText, tsImport);
 	if (leadingComment && !commentIsIgnoreComment(fullText, leadingComment)) {
-		const lastLeadingComment = getLastLeadingComment(fullText, tsImport);
-		if (index !== 0 || start - lastLeadingComment!.end <= 1) {
+		if (index !== 0) {
 			start = leadingComment.pos - 1;
 		}
 	}
