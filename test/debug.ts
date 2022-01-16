@@ -1,4 +1,4 @@
-import { PrettierOptions, SORTING_TYPE } from '../app/types';
+import { IMPORT_TYPE, PrettierOptions, SORTING_TYPE } from '../app/types';
 import { ParserOptions } from 'prettier';
 import * as fs from 'fs/promises';
 
@@ -20,6 +20,8 @@ async function main() {
 	const options: Omit<PrettierOptions, keyof ParserOptions> = {
 		sortingMethod: SORTING_TYPE.LINE_LENGTH,
 		stripNewlines: false,
+		importTypeOrder: [IMPORT_TYPE.ALL],
+		packageJSONFiles: ['package.json'],
 	};
 
 	if (process.argv.includes('--sorting=alphabetical')) {

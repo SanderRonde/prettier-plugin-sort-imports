@@ -1,12 +1,27 @@
+import { IMPORT_TYPE, PrettierOptions, SORTING_TYPE } from '../app/types';
+import { ParserOptions } from 'prettier';
+import * as path from 'path';
 import test from 'ava';
-const app = require('../dist/index') as {
+const app = require(process.argv.includes('--dev')
+	? '../app/index'
+	: '../dist/index') as {
 	parsers: {
 		typescript: {
 			preprocess: (text: string, options: any) => string;
 		};
 	};
 };
-const transform = app.parsers.typescript.preprocess;
+const transform: (
+	text: string,
+	options: Omit<PrettierOptions, keyof ParserOptions>
+) => string = app.parsers.typescript.preprocess;
+
+const defaultOptions: Omit<PrettierOptions, keyof ParserOptions> = {
+	importTypeOrder: [IMPORT_TYPE.ALL],
+	packageJSONFiles: ['package.json'],
+	sortingMethod: SORTING_TYPE.LINE_LENGTH,
+	stripNewlines: false,
+};
 
 function createImports(
 	imports: {
@@ -89,7 +104,7 @@ test('sorts a single block of imports by length', (t) => {
 	const input = createImports(objArr);
 	const expected = createImports(sortArr(objArr));
 
-	t.is(transform(input, {}), expected);
+	t.is(transform(input, defaultOptions), expected);
 });
 test('sorts a single block of imports alphabetically', (t) => {
 	const objArr = [
@@ -113,7 +128,13 @@ test('sorts a single block of imports alphabetically', (t) => {
 	const input = createImports(objArr);
 	const expected = createImports(sortArrAlphabetically(objArr));
 
-	t.is(transform(input, { sortingMethod: 'alphabetical' }), expected);
+	t.is(
+		transform(input, {
+			...defaultOptions,
+			sortingMethod: SORTING_TYPE.ALPHABETICAL,
+		}),
+		expected
+	);
 });
 test('sorts multiple blocks', (t) => {
 	const block1 = [
@@ -143,7 +164,7 @@ test('sorts multiple blocks', (t) => {
 		between +
 		createImports(sortArr(block2));
 
-	t.is(transform(input, {}), expected);
+	t.is(transform(input, defaultOptions), expected);
 });
 test('strips newlines if that option is passed', (t) => {
 	const block1 = [
@@ -170,7 +191,10 @@ test('strips newlines if that option is passed', (t) => {
 	const input = createImports(block1) + between + createImports(block2);
 	const expected = createImports(sortArr([...block1, ...block2]));
 
-	t.is(transform(input, { stripNewlines: true }), expected);
+	t.is(
+		transform(input, { ...defaultOptions, stripNewlines: true }),
+		expected
+	);
 });
 test('does not join blocks if there is more than newlines between them', (t) => {
 	const block1 = [
@@ -200,7 +224,10 @@ test('does not join blocks if there is more than newlines between them', (t) => 
 		between +
 		createImports(sortArr(block2));
 
-	t.is(transform(input, { stripNewlines: true }), expected);
+	t.is(
+		transform(input, { ...defaultOptions, stripNewlines: true }),
+		expected
+	);
 });
 test('leaves the rest of the file alone', (t) => {
 	const block1 = [
@@ -235,7 +262,7 @@ test('leaves the rest of the file alone', (t) => {
 		createImports(sortArr(block2)) +
 		post;
 
-	t.is(transform(input, {}), expected);
+	t.is(transform(input, defaultOptions), expected);
 });
 test('sorts by import length if full length is the same', (t) => {
 	const objArr = [
@@ -255,7 +282,7 @@ test('sorts by import length if full length is the same', (t) => {
 	const input = createImports(objArr);
 	const expected = createImports(sortArr(objArr));
 
-	t.is(transform(input, {}), expected);
+	t.is(transform(input, defaultOptions), expected);
 });
 test('skips files containing the ignore string', (t) => {
 	const objArr = [
@@ -275,7 +302,7 @@ test('skips files containing the ignore string', (t) => {
 
 	const input = '// sort-imports-ignore' + createImports(objArr);
 
-	t.is(transform(input, {}), input);
+	t.is(transform(input, defaultOptions), input);
 });
 test('comments above imports stick to that import', (t) => {
 	const block = `// some comment here
@@ -290,7 +317,7 @@ import ab from 'ab';
 // some comment here
 import a from 'a';`;
 
-	t.is(transform(block, {}), blockExpected);
+	t.is(transform(block, defaultOptions), blockExpected);
 });
 test('moves comments along if there are multiple blocks', (t) => {
 	const block1 = [
@@ -322,7 +349,7 @@ import a from 'a';`;
 	const input = createImports(block1) + '\n\n\n' + block2;
 
 	const expected = createImports(sortArr(block1)) + '\n\n\n' + block2Expected;
-	t.is(transform(input, {}), expected);
+	t.is(transform(input, defaultOptions), expected);
 });
 test('leaves other comments in the file alone', (t) => {
 	const block1 = [
@@ -339,20 +366,20 @@ test('leaves other comments in the file alone', (t) => {
 			statement: 'abcd',
 		},
 	];
-	const restOfFile = '\n\n\n\n\n// @ts-ignore\nconsole.log("some code");';
+	const restOfFile = '\n\n\n\n\n// @ts-ignore\nconsole.warn("some code");';
 
 	const input = createImports(block1) + restOfFile;
 
 	const expected = createImports(sortArr(block1)) + restOfFile;
 
-	t.is(transform(input, {}), expected);
+	t.is(transform(input, defaultOptions), expected);
 });
 test('does not introduce unneeded spacing', (t) => {
 	const input = `import {} from 'a';
 import {} from 'aa';
 import {} from 'aaa';
 import {} from 'aaaa';
-console.log('code between');
+console.warn('code between');
 import {} from 'a';
 import {} from 'aa';
 import {} from 'aaa';
@@ -363,13 +390,16 @@ import {} from 'aaaaa';`;
 import {} from 'aaa';
 import {} from 'aa';
 import {} from 'a';
-console.log('code between');
+console.warn('code between');
 import {} from 'aaaaa';
 import {} from 'aaaa';
 import {} from 'aaa';
 import {} from 'aa';
 import {} from 'a';`;
-	t.is(transform(input, { stripNewlines: true }), expected);
+	t.is(
+		transform(input, { ...defaultOptions, stripNewlines: true }),
+		expected
+	);
 });
 test('can ignore blocks', (t) => {
 	const input = `import {} from 'a';
@@ -394,7 +424,7 @@ import {} from 'aaaaa';
 import {} from 'aaaa';
 import {} from 'aaa';
 import {} from 'aa';`;
-	t.is(transform(input, {}), expected);
+	t.is(transform(input, defaultOptions), expected);
 });
 test('leaves comments above the first import alone if they end with a newline', (t) => {
 	const input = `// Some comment
@@ -411,5 +441,125 @@ import {} from 'aaaa';
 import {} from 'aaa';
 import {} from 'aa';
 import {} from 'a';`;
-	t.is(transform(input, {}), expected);
+	t.is(transform(input, defaultOptions), expected);
+});
+test('sorts npm imports and local imports into different groups', (t) => {
+	const input = `import {} from 'prettier';
+import {} from 'aa';
+import {} from 'aaa';
+import {} from 'typescript';
+import {} from 'aaaa';
+import {} from 'aaaaaaaaaaaaa';`;
+	const expected = `import {} from 'typescript';
+import {} from 'prettier';
+import {} from 'aaaaaaaaaaaaa';
+import {} from 'aaaa';
+import {} from 'aaa';
+import {} from 'aa';`;
+	t.is(
+		transform(input, {
+			...defaultOptions,
+			packageJSONFiles: [
+				path.join(__dirname, './resources/testPackage1.json'),
+			],
+			importTypeOrder: [
+				IMPORT_TYPE.NPM_PACKAGES,
+				IMPORT_TYPE.LOCAL_IMPORTS,
+			],
+		}),
+		expected
+	);
+});
+test('sorts depending on passed order', (t) => {
+	const input = `import {} from 'prettier';
+import {} from 'aa';
+import {} from 'aaa';
+import {} from 'typescript';
+import {} from 'aaaa';
+import {} from 'aaaaaaaaaaaaa';`;
+	const expected = `import {} from 'typescript';
+import {} from 'prettier';
+import {} from 'aaaaaaaaaaaaa';
+import {} from 'aaaa';
+import {} from 'aaa';
+import {} from 'aa';`;
+	t.is(
+		transform(input, {
+			...defaultOptions,
+			packageJSONFiles: [
+				path.join(__dirname, './resources/testPackage1.json'),
+			],
+			importTypeOrder: [
+				IMPORT_TYPE.NPM_PACKAGES,
+				IMPORT_TYPE.LOCAL_IMPORTS,
+			],
+		}),
+		expected
+	);
+});
+test('sorts npm imports, type imports and value imports into different groups', (t) => {
+	const input = `import {} from 'prettier';
+import {} from 'aa';
+import type { ff } from 'aa';
+import {} from 'aaa';
+import {} from 'typescript';
+import type { b } from 'aa';
+import {} from 'aaaa';
+import type {t} from 'typescript';
+import {} from 'aaaaaaaaaaaaa';`;
+	const expected = `import type {t} from 'typescript';
+import {} from 'typescript';
+import {} from 'prettier';
+import type { ff } from 'aa';
+import type { b } from 'aa';
+import {} from 'aaaaaaaaaaaaa';
+import {} from 'aaaa';
+import {} from 'aaa';
+import {} from 'aa';`;
+	t.is(
+		transform(input, {
+			...defaultOptions,
+			packageJSONFiles: [
+				path.join(__dirname, './resources/testPackage1.json'),
+			],
+			importTypeOrder: [
+				IMPORT_TYPE.NPM_PACKAGES,
+				IMPORT_TYPE.TYPES,
+				IMPORT_TYPE.VALUE,
+			],
+		}),
+		expected
+	);
+});
+test('allows specifying of multiple package json files', (t) => {
+	const input = `import {} from 'prettier';
+import {} from 'aa';
+import {} from 'aaa';
+import {} from 'typescript';
+import {} from 'somePackage';
+import {} from 'otherPackage';
+import {} from 'aaaa';
+import {} from 'aaaaaaaaaaaaa';`;
+	const expected = `import {} from 'otherPackage';
+import {} from 'somePackage';
+import {} from 'typescript';
+import {} from 'prettier';
+import {} from 'aaaaaaaaaaaaa';
+import {} from 'aaaa';
+import {} from 'aaa';
+import {} from 'aa';`;
+	t.is(
+		transform(input, {
+			...defaultOptions,
+			packageJSONFiles: [
+				path.join(__dirname, './resources/testPackage1.json'),
+				path.join(__dirname, './resources/testPackage2.json'),
+			],
+			importTypeOrder: [
+				IMPORT_TYPE.NPM_PACKAGES,
+				IMPORT_TYPE.LOCAL_IMPORTS,
+			],
+		}),
+		expected
+	);
 });

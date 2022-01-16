@@ -4,7 +4,10 @@ import { sortBlockAlphabetically } from './sorters/alphabetical';
 import { PrettierOptions, SORTING_TYPE } from './types';
 import { sortBlockByLength } from './sorters/by-length';
 import * as ts from 'typescript';
-import { ParserOptions } from 'prettier';
+import { validateOptions } from './options';
+import { generateImportSorter, ImportTypeSorter } from './sorters/import-type';
+
+export { options } from './options';
 
 function countStringAppearances(str: string, char: string) {
 	let count: number = 0;
@@ -16,7 +19,7 @@ function countStringAppearances(str: string, char: string) {
 	return count;
 }
 
-type SingleImport = {
+export type SingleImport = {
 	import: ts.ImportDeclaration;
 	start: number;
 	end: number;
@@ -249,19 +252,35 @@ function trimSpaces(line: string) {
 	return line;
 }
 
+function sortBlockImports(
+	block: ImportBlock,
+	options: PrettierOptions,
+	importTypeSorter: ImportTypeSorter
+) {
+	const presorted = importTypeSorter ? importTypeSorter(block) : [block];
+	const sorterFunction =
+		options.sortingMethod === SORTING_TYPE.ALPHABETICAL
+			? sortBlockAlphabetically
+			: sortBlockByLength;
+	const sorted = presorted.map(sorterFunction);
+	let flattened: SingleImport[] = [];
+	for (const sortedBlock of sorted) {
+		flattened = flattened.concat(sortedBlock);
+	}
+	return flattened;
+}
+
 function sortBlock(
 	block: ImportBlock,
 	fullText: string,
-	options: PrettierOptions
+	options: PrettierOptions,
+	importTypeSorter: ImportTypeSorter
 ): string {
 	if (block.length === 0) {
 		return fullText;
 	}
 
-	const sorted =
-		options.sortingMethod === SORTING_TYPE.ALPHABETICAL
-			? sortBlockAlphabetically(block)
-			: sortBlockByLength(block);
+	const sorted = sortBlockImports(block, options, importTypeSorter);
 
 	let blockText = transformLines(
 		sorted.map((s) => trimSpaces(fullText.slice(s.start, s.end))),
@@ -383,6 +402,24 @@ function getIgnoredRanges(text: string): IgnoredRange[] | null {
 	return ranges;
 }
 
+interface InitResult {
+	importTypeSorter: ImportTypeSorter;
+}
+
+let initResult: InitResult | null = null;
+function ensureInit(options: PrettierOptions): InitResult {
+	if (initResult && !process.argv.includes('--sort-imports-reinit')) {
+		return initResult;
+	}
+
+	validateOptions(options);
+
+	initResult = {
+		importTypeSorter: generateImportSorter(options),
+	};
+	return initResult;
+}
+
 /**
  * Organize the imports
  */
@@ -394,6 +431,8 @@ function sortImports(text: string, options: PrettierOptions) {
 	) {
 		return text;
 	}
+
+	const initData = ensureInit(options);
 
 	const ignoredRanges = getIgnoredRanges(text);
 	if (ignoredRanges === null) {
@@ -416,7 +455,7 @@ function sortImports(text: string, options: PrettierOptions) {
 		ignoredRanges
 	).reverse();
 	for (const block of blocks) {
-		text = sortBlock(block, text, options);
+		text = sortBlock(block, text, options, initData.importTypeSorter);
 	}
 
 	return text;
@@ -444,35 +483,5 @@ export const parsers = {
 					);
 			  }
 			: sortImports,
-	},
-};
-
-export const options: {
-	[K in keyof Omit<PrettierOptions, keyof ParserOptions>]: unknown;
-} = {
-	sortingMethod: {
-		since: '1.15.0',
-		category: 'Global',
-		type: 'choice',
-		default: SORTING_TYPE.LINE_LENGTH,
-		description: 'Which sorting method to use',
-		choices: [
-			{
-				value: SORTING_TYPE.ALPHABETICAL,
-				description: 'Sort imports alphabetically by the import path',
-			},
-			{
-				value: SORTING_TYPE.LINE_LENGTH,
-				description: 'Sort by line length, descending',
-			},
-		],
-	},
-	stripNewlines: {
-		since: '1.15.0',
-		category: 'Global',
-		type: 'boolean',
-		default: false,
-		description:
-			'Whether to strip newlines between blocks (joining blocks)',
 	},
 };

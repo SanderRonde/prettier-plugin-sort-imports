@@ -1,0 +1,6 @@
+{
+	"dependencies": {
+		"somePackage": "^2.5.1",
+		"otherPackage": "^4.0.3"
+	}
+}

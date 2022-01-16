@@ -3,3 +3,5 @@ node_modules
 **/*.js
 **/*.map
 **/*.d.ts
+
+test/demo.ts
