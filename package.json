@@ -1,6 +1,6 @@
 {
 	"name": "prettier-plugin-sort-imports",
-	"version": "1.5.2",
+	"version": "1.5.3",
 	"description": "A prettier plugin for sorting imports by length",
 	"main": "dist/index.js",
 	"repository": "https://github.com/SanderRonde/prettier-plugin-sort-imports.git",
