@@ -90,7 +90,7 @@ export const options: {
 		category: 'Global',
 		array: true,
 		type: 'choice',
-		default: [IMPORT_TYPE.ALL],
+		default: [{ value: [IMPORT_TYPE.ALL] }],
 		description:
 			'Order in which to sort import types. Does not take import type into account by default.',
 		choices: [
@@ -125,7 +125,7 @@ export const options: {
 		category: 'Global',
 		array: true,
 		type: 'string',
-		default: ['package.json'],
+		default: [{ value: ['package.json'] }],
 		description:
 			'Paths to package.json files. These files will be used to infer NPM packages',
 	},
