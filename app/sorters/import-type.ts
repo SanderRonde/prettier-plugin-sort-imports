@@ -1,7 +1,7 @@
 import { IMPORT_TYPE, PrettierOptions } from '../types';
 import type { ImportBlock, SingleImport } from '..';
-import * as fs from 'fs';
 import ts from 'typescript';
+import * as fs from 'fs';
 
 function getNPMPackages(packageJSONFiles: string[]): string[] {
 	const packages: string[] = [];
@@ -72,6 +72,15 @@ function isNPMPackage(
 	return npmPackages.includes(initialImportPath);
 }
 
+function firstNonNegativeIndex(...indices: number[]): number {
+	for (const index of indices) {
+		if (index !== -1) {
+			return index;
+		}
+	}
+	return -1;
+}
+
 /**
  * Tries to generate a mostly-optimized function by limiting all
  * choices that can be made now to the outer scope.
@@ -89,11 +98,15 @@ export function generateImportSorter({
 		importTypeOrder.includes(IMPORT_TYPE.VALUE) ||
 		importTypeOrder.includes(IMPORT_TYPE.TYPES)
 	) {
-		const typesFirst =
-			importTypeOrder.indexOf(IMPORT_TYPE.TYPES) <
-			importTypeOrder.indexOf(IMPORT_TYPE.VALUE);
-		const npmConcatter = generateOrderer<SingleImport>(
-			typesFirst ? [0, 1] : [1, 0]
+		const npmPackagesFirst =
+			importTypeOrder.indexOf(IMPORT_TYPE.NPM_PACKAGES) <
+			firstNonNegativeIndex(
+				importTypeOrder.indexOf(IMPORT_TYPE.LOCAL_IMPORTS),
+				importTypeOrder.indexOf(IMPORT_TYPE.TYPES),
+				importTypeOrder.indexOf(IMPORT_TYPE.VALUE)
+			);
+		const typeConcatter = generateOrderer<SingleImport>(
+			npmPackagesFirst ? [1, 0] : [0, 1]
 		);
 		const concatter = generateOrderer<SingleImport>(
 			generateOrder(importTypeOrder, [
@@ -130,10 +143,14 @@ export function generateImportSorter({
 				}
 			}
 
-			return concatter(valueImports, typeImports, {
-				isGroup: true,
-				values: npmConcatter(typeNpmImports, npmImports),
-			});
+			return concatter(
+				valueImports,
+				{
+					isGroup: true,
+					values: typeConcatter(typeImports, typeNpmImports),
+				},
+				npmImports
+			);
 		};
 	}
 
