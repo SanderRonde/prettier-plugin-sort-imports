@@ -18,4 +18,5 @@ export interface PrettierOptions extends ParserOptions {
 	stripNewlines: boolean;
 	importTypeOrder: IMPORT_TYPE[];
 	packageJSONFiles: string[];
+	newlineBetweenTypes: boolean;
 }

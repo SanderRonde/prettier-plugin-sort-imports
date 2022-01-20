@@ -1,5 +1,5 @@
-import { ParserOptions } from 'prettier';
 import { IMPORT_TYPE, PrettierOptions, SORTING_TYPE } from './types';
+import { ParserOptions } from 'prettier';
 
 function validateImportTypeOrderOptions(
 	options: PrettierOptions
@@ -128,5 +128,14 @@ export const options: {
 		default: [{ value: ['package.json'] }],
 		description:
 			'Paths to package.json files. These files will be used to infer NPM packages',
+	},
+	newlineBetweenTypes: {
+		since: '1.15.0',
+		category: 'Global',
+		array: true,
+		type: 'boolean',
+		default: false,
+		description:
+			'Puts a newline between imports of different groups (see importTypeOrder)',
 	},
 };

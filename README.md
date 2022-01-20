@@ -26,5 +26,6 @@ The plugin will be loaded by Prettier automatically. No configuration needed. It
     -   `'localImports'`: All local imports that are declared with a value or a type. `import foo from './foo'` and `import type foo from './foo'` both fall into this category. Can only be used if `NPMPackages` is also specified.
     -   `'all'`: All imports fall into this category.
 -   `packageJSONFiles`: `string[]`. Set to `['package.json']` by default. Lists the `package.json` files to be used for the `'NPMPackages'` import type. Note that if you specified `['all']` for the `importTypeOrder` option (or specified none at all), this is not used.
+-   `newlineBetweenTypes`: `boolean`. Set to `false` by default. Determines whether a newline should be inserted between different import types.
 
 Files containing the string `// sort-imports-ignore` are skipped. You can also ignore sections by using `// sort-imports-begin-ignore` and `// sort-imports-end-ignore`.

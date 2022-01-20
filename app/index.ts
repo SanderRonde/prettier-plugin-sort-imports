@@ -19,11 +19,13 @@ function countStringAppearances(str: string, char: string) {
 	return count;
 }
 
-export type SingleImport = {
+export interface SingleImport {
 	import: ts.ImportDeclaration;
 	start: number;
 	end: number;
-};
+}
+
+const importNewline = Symbol('importNewline');
 
 export type ImportBlock = SingleImport[];
 
@@ -248,9 +250,13 @@ function sortBlockImports(
 			? sortBlockAlphabetically
 			: sortBlockByLength;
 	const sorted = presorted.map(sorterFunction);
-	let flattened: SingleImport[] = [];
-	for (const sortedBlock of sorted) {
+	let flattened: (SingleImport | typeof importNewline)[] = [];
+	for (let i = 0; i < sorted.length; i++) {
+		const sortedBlock = sorted[i];
 		flattened = flattened.concat(sortedBlock);
+		if (options.newlineBetweenTypes && i < sorted.length - 1) {
+			flattened.push(importNewline);
+		}
 	}
 	return flattened;
 }
@@ -268,7 +274,11 @@ function sortBlock(
 	const sorted = sortBlockImports(block, options, importTypeSorter);
 
 	let blockText = transformLines(
-		sorted.map((s) => trimSpaces(fullText.slice(s.start, s.end))),
+		sorted.map((s) =>
+			s === importNewline
+				? '\n\n'
+				: trimSpaces(fullText.slice(s.start, s.end))
+		),
 		options.stripNewlines
 	).join('');
 	const lastBlock = block[block.length - 1];
