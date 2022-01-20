@@ -596,7 +596,7 @@ import {} from 'aa';`;
 		expected
 	);
 });
-test('can insert a newline between import types evne when stripLine sis enabled', (t) => {
+test('can insert a newline between import types even when stripLines is enabled', (t) => {
 	const input = `import {} from 'prettier';
 import {} from 'aa';
 import {} from 'aaa';
