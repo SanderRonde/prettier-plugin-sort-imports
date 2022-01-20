@@ -132,7 +132,6 @@ export const options: {
 	newlineBetweenTypes: {
 		since: '1.15.0',
 		category: 'Global',
-		array: true,
 		type: 'boolean',
 		default: false,
 		description:
