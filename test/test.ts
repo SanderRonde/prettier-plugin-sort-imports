@@ -596,3 +596,44 @@ import {} from 'aa';`;
 		expected
 	);
 });
+test('can insert a newline between import types evne when stripLine sis enabled', (t) => {
+	const input = `import {} from 'prettier';
+import {} from 'aa';
+import {} from 'aaa';
+
+
+
+import {} from 'typescript';
+import {} from 'somePackage';
+import {} from 'otherPackage';
+
+
+
+import {} from 'aaaa';
+import {} from 'aaaaaaaaaaaaa';`;
+	const expected = `import {} from 'otherPackage';
+import {} from 'somePackage';
+import {} from 'typescript';
+import {} from 'prettier';
+
+import {} from 'aaaaaaaaaaaaa';
+import {} from 'aaaa';
+import {} from 'aaa';
+import {} from 'aa';`;
+	t.is(
+		transform(input, {
+			...defaultOptions,
+			packageJSONFiles: [
+				path.join(__dirname, './resources/testPackage1.json'),
+				path.join(__dirname, './resources/testPackage2.json'),
+			],
+			importTypeOrder: [
+				IMPORT_TYPE.NPM_PACKAGES,
+				IMPORT_TYPE.LOCAL_IMPORTS,
+			],
+			newlineBetweenTypes: true,
+			stripNewlines: true,
+		}),
+		expected
+	);
+});

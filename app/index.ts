@@ -204,16 +204,25 @@ function findImportBlocks(
 	return blocks.filter((block) => block.length > 0);
 }
 
-function transformLines(lines: string[], stripNewlines: boolean): string[] {
+function transformLines(
+	lines: (string | typeof importNewline)[],
+	options: PrettierOptions
+): (string | typeof importNewline)[] {
 	return lines
 		.map((b) => {
+			if (b === importNewline) {
+				return b;
+			}
 			if (!b.startsWith('\n')) {
 				return `\n${b}`;
 			}
 			return b;
 		})
 		.map((b) => {
-			if (stripNewlines) {
+			if (b === importNewline) {
+				return b;
+			}
+			if (options.stripNewlines) {
 				while (b.startsWith('\n')) {
 					b = b.slice(1);
 				}
@@ -222,6 +231,9 @@ function transformLines(lines: string[], stripNewlines: boolean): string[] {
 			return b;
 		})
 		.map((b) => {
+			if (b === importNewline) {
+				return b;
+			}
 			if (b.endsWith('\n')) {
 				return b.slice(0, -1);
 			}
@@ -273,14 +285,15 @@ function sortBlock(
 
 	const sorted = sortBlockImports(block, options, importTypeSorter);
 
-	let blockText = transformLines(
+	const blockLines = transformLines(
 		sorted.map((s) =>
 			s === importNewline
-				? '\n\n'
+				? importNewline
 				: trimSpaces(fullText.slice(s.start, s.end))
 		),
-		options.stripNewlines
-	).join('');
+		options
+	).map((line) => (line === importNewline ? '\n' : line));
+	let blockText = blockLines.join('');
 	const lastBlock = block[block.length - 1];
 	let lastBlockEnd =
 		lastBlock.import.getFullStart() + lastBlock.import.getFullWidth();
