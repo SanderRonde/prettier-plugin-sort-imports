@@ -591,7 +591,7 @@ import {} from 'aa';`;
 				IMPORT_TYPE.NPM_PACKAGES,
 				IMPORT_TYPE.LOCAL_IMPORTS,
 			],
-			newlineBetweenTypes: true
+			newlineBetweenTypes: true,
 		}),
 		expected
 	);

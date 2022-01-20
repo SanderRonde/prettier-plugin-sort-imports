@@ -22,6 +22,7 @@ async function main() {
 		stripNewlines: false,
 		importTypeOrder: [IMPORT_TYPE.ALL],
 		packageJSONFiles: ['package.json'],
+		newlineBetweenTypes: false,
 	};
 
 	if (process.argv.includes('--sorting=alphabetical')) {
