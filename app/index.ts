@@ -5,7 +5,11 @@ import { PrettierOptions, SORTING_TYPE } from './types';
 import { sortBlockByLength } from './sorters/by-length';
 import * as ts from 'typescript';
 import { validateOptions } from './options';
-import { generateImportSorter, ImportTypeSorter } from './sorters/import-type';
+import {
+	generateImportSorter,
+	ImportTypeSorter,
+	OrderGroup,
+} from './sorters/import-type';
 
 export { options } from './options';
 
@@ -25,9 +29,13 @@ export interface SingleImport {
 	end: number;
 }
 
-const importNewline = Symbol('importNewline');
+export const importNewline = Symbol('importNewline');
 
 export type ImportBlock = SingleImport[];
+export type ImportBlockWithGroups = (
+	| SingleImport[]
+	| OrderGroup<SingleImport[]>
+)[];
 
 function getLastTrailingComment(
 	fullText: string,
@@ -261,11 +269,23 @@ function sortBlockImports(
 		options.sortingMethod === SORTING_TYPE.ALPHABETICAL
 			? sortBlockAlphabetically
 			: sortBlockByLength;
-	const sorted = presorted.map(sorterFunction);
+	const sorted = presorted.map((block) => {
+		if (block instanceof OrderGroup) {
+			return new OrderGroup(block.values.map(sorterFunction));
+		} else {
+			return sorterFunction(block);
+		}
+	});
 	let flattened: (SingleImport | typeof importNewline)[] = [];
 	for (let i = 0; i < sorted.length; i++) {
 		const sortedBlock = sorted[i];
-		flattened = flattened.concat(sortedBlock);
+		if (sortedBlock instanceof OrderGroup) {
+			for (const subgroup of sortedBlock.values) {
+				flattened = flattened.concat(subgroup);
+			}
+		} else {
+			flattened = flattened.concat(sortedBlock as ImportBlock);
+		}
 		if (options.newlineBetweenTypes && i < sorted.length - 1) {
 			flattened.push(importNewline);
 		}

@@ -1,5 +1,5 @@
+import { ImportBlock, ImportBlockWithGroups, SingleImport } from '..';
 import { IMPORT_TYPE, PrettierOptions } from '../types';
-import type { ImportBlock, SingleImport } from '..';
 import ts from 'typescript';
 import * as fs from 'fs';
 
@@ -36,11 +36,16 @@ function generateOrder(sorting: IMPORT_TYPE[], passOrder: IMPORT_TYPE[]) {
 	return order;
 }
 
+export class OrderGroup<V> {
+	constructor(public values: V[]) {}
+}
+
 function generateOrderer<V>(order: number[]) {
-	return (...values: V[][]): V[][] => {
-		let result: V[][] = [];
+	return (...values: (V | OrderGroup<V>)[]): (V | OrderGroup<V>)[] => {
+		let result: (V | OrderGroup<V>)[] = [];
 		for (const index of order) {
-			result.push(values[index]);
+			const value = values[index];
+			result.push(value);
 		}
 		return result;
 	};
@@ -48,7 +53,7 @@ function generateOrderer<V>(order: number[]) {
 
 export type ImportTypeSorter =
 	| undefined
-	| ((declarations: ImportBlock) => ImportBlock[]);
+	| ((declarations: ImportBlock) => ImportBlockWithGroups);
 
 function isNPMPackage(
 	npmPackages: string[],
@@ -60,6 +65,15 @@ function isNPMPackage(
 		? importpathwithoutQuotes.split('/')[0]
 		: importpathwithoutQuotes;
 	return npmPackages.includes(initialImportPath);
+}
+
+function firstIndex(...incides: number[]) {
+	for (const index of incides) {
+		if (index !== -1) {
+			return index;
+		}
+	}
+	return -1;
 }
 
 /**
@@ -79,12 +93,21 @@ export function generateImportSorter({
 		importTypeOrder.includes(IMPORT_TYPE.VALUE) ||
 		importTypeOrder.includes(IMPORT_TYPE.TYPES)
 	) {
-		const concatter = generateOrderer<SingleImport>(
+		const concatter = generateOrderer<SingleImport[]>(
 			generateOrder(importTypeOrder, [
 				IMPORT_TYPE.VALUE,
 				IMPORT_TYPE.TYPES,
 				IMPORT_TYPE.NPM_PACKAGES,
 			])
+		);
+		const npmImportsFirst =
+			importTypeOrder.indexOf(IMPORT_TYPE.NPM_PACKAGES) <
+			firstIndex(
+				importTypeOrder.indexOf(IMPORT_TYPE.VALUE),
+				importTypeOrder.indexOf(IMPORT_TYPE.LOCAL_IMPORTS)
+			);
+		const typeImportSorter = generateOrderer<SingleImport[]>(
+			npmImportsFirst ? [0, 1] : [1, 0]
 		);
 
 		// Differentiate between type imports and value imports
@@ -116,13 +139,18 @@ export function generateImportSorter({
 
 			return concatter(
 				valueImports,
-				[...typeImports, ...typeNpmImports],
+				new OrderGroup(
+					typeImportSorter(
+						typeNpmImports,
+						typeImports
+					) as SingleImport[][]
+				),
 				npmImports
 			);
 		};
 	}
 
-	const concatter = generateOrderer<SingleImport>(
+	const concatter = generateOrderer<SingleImport[]>(
 		generateOrder(importTypeOrder, [
 			IMPORT_TYPE.NPM_PACKAGES,
 			IMPORT_TYPE.LOCAL_IMPORTS,

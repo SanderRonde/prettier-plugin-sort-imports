@@ -567,9 +567,12 @@ test('can insert a newline between import types', (t) => {
 import {} from 'aa';
 import {} from 'aaa';
 import {} from 'typescript';
+import type {} from 'typescript';
+import type {} from 'somePackage';
 import {} from 'somePackage';
 import {} from 'otherPackage';
 import {} from 'aaaa';
+import type {} from 'aaaa';
 import {} from 'aaaaaaaaaaaaa';`;
 	const expected = `import {} from 'otherPackage';
 import {} from 'somePackage';
@@ -579,7 +582,11 @@ import {} from 'prettier';
 import {} from 'aaaaaaaaaaaaa';
 import {} from 'aaaa';
 import {} from 'aaa';
-import {} from 'aa';`;
+import {} from 'aa';
+
+import type {} from 'somePackage';
+import type {} from 'typescript';
+import type {} from 'aaaa';`;
 	t.is(
 		transform(input, {
 			...defaultOptions,
@@ -589,7 +596,8 @@ import {} from 'aa';`;
 			],
 			importTypeOrder: [
 				IMPORT_TYPE.NPM_PACKAGES,
-				IMPORT_TYPE.LOCAL_IMPORTS,
+				IMPORT_TYPE.VALUE,
+				IMPORT_TYPE.TYPES,
 			],
 			newlineBetweenTypes: true,
 		}),
