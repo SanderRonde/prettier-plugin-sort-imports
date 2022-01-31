@@ -61,10 +61,9 @@ function isNPMPackage(
 ): boolean {
 	const importPath = tsImport.moduleSpecifier.getText();
 	const importpathwithoutQuotes = importPath.slice(1, -1);
-	const initialImportPath = importpathwithoutQuotes.includes('/')
-		? importpathwithoutQuotes.split('/')[0]
-		: importpathwithoutQuotes;
-	return npmPackages.includes(initialImportPath);
+	return npmPackages.some((npmPackage) =>
+		importpathwithoutQuotes.startsWith(npmPackage)
+	);
 }
 
 function firstIndex(...incides: number[]) {
