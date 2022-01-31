@@ -324,6 +324,9 @@ function sortBlock(
 	if (trailingComments) {
 		lastBlockEnd = trailingComments[trailingComments.length - 1].end;
 		if (trailingComments[trailingComments.length - 1].hasTrailingNewLine) {
+			if (!blockText.endsWith('\n')) {
+				blockText += '\n';
+			}
 			lastBlockEnd += 1;
 		}
 	}
