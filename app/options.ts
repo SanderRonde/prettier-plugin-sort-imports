@@ -125,9 +125,9 @@ export const options: {
 		category: 'Global',
 		array: true,
 		type: 'string',
-		default: [{ value: ['package.json'] }],
+		default: [{ value: ['./package.json'] }],
 		description:
-			'Paths to package.json files. These files will be used to infer NPM packages',
+			'Paths to package.json files relative to the .prettierrc.json file. These files will be used to infer NPM packages',
 	},
 	newlineBetweenTypes: {
 		since: '1.15.0',

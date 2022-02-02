@@ -1,12 +1,28 @@
 import { ImportBlock, ImportBlockWithGroups, SingleImport } from '..';
 import { IMPORT_TYPE, PrettierOptions } from '../types';
+import { resolveConfigFile } from 'prettier';
+import * as path from 'path';
 import ts from 'typescript';
 import * as fs from 'fs';
 
 function getNPMPackages(packageJSONFiles: string[]): string[] {
 	const packages: string[] = [];
+
+	let rcFile: string|null|undefined = undefined;;
+	const procCwd = process.cwd();
 	for (const packageJSONFile of packageJSONFiles) {
-		const packageText = fs.readFileSync(packageJSONFile, 'utf8');
+		const filePath = (() => {
+			if (path.isAbsolute(packageJSONFile)) {
+				return packageJSONFile;
+			} else {
+				if (rcFile === undefined) {
+					rcFile = resolveConfigFile.sync();
+				}
+				const cwd = rcFile ? path.dirname(rcFile) : procCwd;
+				return path.join(cwd, packageJSONFile);
+			}
+		})();
+		const packageText = fs.readFileSync(filePath, 'utf8');
 		try {
 			const packageJSON = JSON.parse(packageText);
 			if (packageJSON.dependencies) {
@@ -15,7 +31,7 @@ function getNPMPackages(packageJSONFiles: string[]): string[] {
 				}
 			}
 		} catch (e) {
-			console.warn('Failed to parse package.json file:', packageJSONFile);
+			console.warn('Failed to parse package.json file:', filePath);
 		}
 	}
 	const uniquePackages = [...new Set(packages)];
