@@ -8,7 +8,7 @@ import * as fs from 'fs';
 function getNPMPackages(packageJSONFiles: string[]): string[] {
 	const packages: string[] = [];
 
-	let rcFile: string|null|undefined = undefined;;
+	let rcFile: string | null | undefined = undefined;
 	const procCwd = process.cwd();
 	for (const packageJSONFile of packageJSONFiles) {
 		const filePath = (() => {
