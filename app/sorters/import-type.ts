@@ -5,7 +5,10 @@ import * as path from 'path';
 import ts from 'typescript';
 import * as fs from 'fs';
 
-function getNPMPackages(packageJSONFiles: string[]): string[] {
+function getNPMPackages(
+	formatFilePath: string,
+	packageJSONFiles: string[]
+): string[] {
 	const packages: string[] = [];
 
 	let rcFile: string | null | undefined = undefined;
@@ -16,7 +19,7 @@ function getNPMPackages(packageJSONFiles: string[]): string[] {
 				return packageJSONFile;
 			} else {
 				if (rcFile === undefined) {
-					rcFile = resolveConfigFile.sync();
+					rcFile = resolveConfigFile.sync(formatFilePath);
 				}
 				const cwd = rcFile ? path.dirname(rcFile) : procCwd;
 				return path.join(cwd, packageJSONFile);
@@ -98,12 +101,13 @@ function firstIndex(...incides: number[]) {
 export function generateImportSorter({
 	importTypeOrder,
 	packageJSONFiles,
+	filepath,
 }: PrettierOptions): ImportTypeSorter {
 	if (importTypeOrder.includes(IMPORT_TYPE.ALL)) {
 		return undefined;
 	}
 
-	const npmPackages = getNPMPackages(packageJSONFiles);
+	const npmPackages = getNPMPackages(filepath, packageJSONFiles);
 	if (
 		importTypeOrder.includes(IMPORT_TYPE.VALUE) ||
 		importTypeOrder.includes(IMPORT_TYPE.TYPES)
