@@ -15,10 +15,14 @@ function getNPMPackages(packageJSONFiles: string[]): string[] {
 			if (path.isAbsolute(packageJSONFile)) {
 				return packageJSONFile;
 			} else {
+				console.warn('attempting to resolve RC file');
 				if (rcFile === undefined) {
 					rcFile = resolveConfigFile.sync();
 				}
+				console.warn(`found file ${rcFile}`);
 				const cwd = rcFile ? path.dirname(rcFile) : procCwd;
+				console.warn(`using cwd ${cwd}`);
+				console.warn('final path is', path.join(cwd, packageJSONFile));
 				return path.join(cwd, packageJSONFile);
 			}
 		})();
