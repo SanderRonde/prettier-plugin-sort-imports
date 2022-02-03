@@ -10,22 +10,30 @@ function getNPMPackages(packageJSONFiles: string[]): string[] {
 
 	let rcFile: string | null | undefined = undefined;
 	const procCwd = process.cwd();
+	let data = `package JSON files=${packageJSONFiles}`;
 	for (const packageJSONFile of packageJSONFiles) {
 		const filePath = (() => {
 			if (path.isAbsolute(packageJSONFile)) {
+				data += 'file (' + packageJSONFile + ') is absolute\n';
 				return packageJSONFile;
 			} else {
-				console.warn('attempting to resolve RC file');
+				data += ('attempting to resolve RC file\n');
 				if (rcFile === undefined) {
 					rcFile = resolveConfigFile.sync();
 				}
-				console.warn(`found file ${rcFile}`);
+				data += (`found file ${rcFile}\n`);
 				const cwd = rcFile ? path.dirname(rcFile) : procCwd;
-				console.warn(`using cwd ${cwd}`);
-				console.warn('final path is', path.join(cwd, packageJSONFile));
+				data += (`using cwd ${cwd}\n`);
+				data += ('final path is' + path.join(cwd, packageJSONFile) + '\n');
 				return path.join(cwd, packageJSONFile);
 			}
 		})();
+		data += `Reading file ${filePath}\n`;
+		try {
+			fs.readFileSync(filePath, 'utf8');
+		} catch(e) {
+			throw new Error(`failed to read file. Err: ${e.message}. Data=${data}`);
+		}
 		const packageText = fs.readFileSync(filePath, 'utf8');
 		try {
 			const packageJSON = JSON.parse(packageText);
