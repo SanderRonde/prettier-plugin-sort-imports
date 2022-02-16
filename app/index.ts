@@ -10,8 +10,9 @@ import {
 	ImportTypeSorter,
 	OrderGroup,
 } from './sorters/import-type';
-
 export { options } from './options';
+
+const CACHE_REFRESH_INTERVAL = 1000 * 60 * 2.5;
 
 function countStringAppearances(str: string, char: string) {
 	let count: number = 0;
@@ -438,9 +439,17 @@ interface InitResult {
 }
 
 let initResult: InitResult | null = null;
+let hasCacheClearTimer: boolean = false;
 function ensureInit(options: PrettierOptions): InitResult {
 	if (initResult && !process.argv.includes('--sort-imports-reinit')) {
 		return initResult;
+	}
+
+	if (hasCacheClearTimer) {
+		const timer = setInterval(() => {
+			initResult = null;
+		}, CACHE_REFRESH_INTERVAL);
+		timer.unref();
 	}
 
 	validateOptions(options);
