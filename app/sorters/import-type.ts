@@ -1,6 +1,7 @@
 import { ImportBlock, ImportBlockWithGroups, SingleImport } from '..';
 import { IMPORT_TYPE, PrettierOptions } from '../types';
 import { resolveConfigFile } from 'prettier';
+import { builtinModules } from 'module';
 import * as path from 'path';
 import ts from 'typescript';
 import * as fs from 'fs';
@@ -74,13 +75,14 @@ export type ImportTypeSorter =
 	| undefined
 	| ((declarations: ImportBlock) => ImportBlockWithGroups);
 
+const builtinNodeModules = builtinModules.filter((m) => !m.startsWith('_'));
 function isNPMPackage(
 	npmPackages: string[],
 	tsImport: ts.ImportDeclaration
 ): boolean {
 	const importPath = tsImport.moduleSpecifier.getText();
 	const importpathwithoutQuotes = importPath.slice(1, -1);
-	return npmPackages.some((npmPackage) =>
+	return [...npmPackages, ...builtinNodeModules].some((npmPackage) =>
 		importpathwithoutQuotes.startsWith(npmPackage)
 	);
 }
