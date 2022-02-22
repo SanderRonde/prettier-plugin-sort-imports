@@ -22,6 +22,7 @@
 		"dist/**"
 	],
 	"scripts": {
+		"prepublish": "prepack",
 		"bundle": "esbuild --bundle --minify --platform=node --external:typescript --external:prettier --outfile=dist/index.js app/index.ts",
 		"test": "yarn bundle && ava test/test.ts -- -- --sort-imports-reinit",
 		"testDev": "ava test/test.ts -- -- --dev --sort-imports-reinit",
