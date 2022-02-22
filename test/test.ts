@@ -28,12 +28,16 @@ function createImports(
 	imports: {
 		statement: string;
 		importPath: string;
-	}[]
+	}[],
+	useRequire: boolean = false
 ) {
 	return (
 		'\n\n\n' +
 		imports
 			.map((i) => {
+				if (useRequire) {
+					return `const ${i.statement} = require('${i.importPath}');`;
+				}
 				return `import { ${i.statement} } from '${i.importPath}';`;
 			})
 			.join('\n') +
@@ -641,6 +645,36 @@ import {} from 'aa';`;
 			],
 			newlineBetweenTypes: true,
 			stripNewlines: true,
+		}),
+		expected
+	);
+});
+test('also supports requires', (t) => {
+	const objArr = [
+		{
+			importPath: 'd',
+			statement: 'a',
+		},
+		{
+			importPath: 'c',
+			statement: 'ab',
+		},
+		{
+			importPath: 'a',
+			statement: 'abc',
+		},
+		{
+			importPath: 'b',
+			statement: 'abcd',
+		},
+	];
+	const input = createImports(objArr, true);
+	const expected = createImports(sortArrAlphabetically(objArr), true);
+
+	t.is(
+		transform(input, {
+			...defaultOptions,
+			sortingMethod: SORTING_TYPE.ALPHABETICAL,
 		}),
 		expected
 	);

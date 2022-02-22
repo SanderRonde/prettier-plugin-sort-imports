@@ -24,8 +24,12 @@ function countStringAppearances(str: string, char: string) {
 	return count;
 }
 
+export type TSImportStatement = ts.ImportDeclaration | ts.VariableStatement;
+
 export interface SingleImport {
-	import: ts.ImportDeclaration;
+	import: TSImportStatement;
+	isTypeOnly: boolean;
+	importPath: string;
 	start: number;
 	end: number;
 }
@@ -38,10 +42,7 @@ export type ImportBlockWithGroups = (
 	| OrderGroup<SingleImport[]>
 )[];
 
-function getLastTrailingComment(
-	fullText: string,
-	tsImport: ts.ImportDeclaration
-) {
+function getLastTrailingComment(fullText: string, tsImport: TSImportStatement) {
 	const comments = ts.getTrailingCommentRanges(
 		fullText,
 		tsImport.getFullStart() + tsImport.getFullWidth()
@@ -52,10 +53,7 @@ function getLastTrailingComment(
 	return comments[comments.length - 1];
 }
 
-function getFirstLeadingComment(
-	fullText: string,
-	tsImport: ts.ImportDeclaration
-) {
+function getFirstLeadingComment(fullText: string, tsImport: TSImportStatement) {
 	const comments = ts.getLeadingCommentRanges(
 		fullText,
 		tsImport.getFullStart()
@@ -69,7 +67,9 @@ function getFirstLeadingComment(
 function getImportRanges(
 	blocks: ImportBlock[],
 	fullText: string,
-	tsImport: ts.ImportDeclaration
+	tsImport: TSImportStatement,
+	importPath: string,
+	isTypeOnly: boolean
 ): SingleImport {
 	const currentBlock = blocks[blocks.length - 1];
 	const index = currentBlock.length;
@@ -108,7 +108,9 @@ function getImportRanges(
 	return {
 		import: tsImport,
 		start: Math.max(start, 0),
+		importPath,
 		end,
+		isTypeOnly,
 	};
 }
 
@@ -138,6 +140,27 @@ function commentIsIgnoreComment(
 	);
 }
 
+function getImportPath(tsImport: TSImportStatement) {
+	if (ts.isImportDeclaration(tsImport)) {
+		return tsImport.moduleSpecifier.getText();
+	} else {
+		if (tsImport.declarationList.declarations.length !== 1) {
+			return null;
+		}
+		const declaration = tsImport.declarationList.declarations[0];
+		if (!ts.isVariableDeclaration(declaration)) {
+			return null;
+		}
+
+		const initializer = declaration.initializer;
+		if (!initializer || !ts.isCallExpression(initializer)) {
+			return null;
+		}
+
+		return initializer.arguments[0].getText();
+	}
+}
+
 // Find all "blocks" of imports. These are just lines of imports
 // without any newlines between them
 function findImportBlocks(
@@ -151,9 +174,23 @@ function findImportBlocks(
 			? file.getChildren()[0].getChildren()
 			: file.getChildren();
 
-	let lastDeclaration: ts.ImportDeclaration | null = null;
+	let lastDeclaration: TSImportStatement | null = null;
 	for (const child of rootChildren) {
-		if (ts.isImportDeclaration(child)) {
+		if (
+			ts.isImportDeclaration(child) ||
+			(ts.isVariableStatement(child) &&
+				child.declarationList &&
+				child.declarationList.declarations.length === 1 &&
+				ts.isVariableDeclaration(
+					child.declarationList.declarations[0]
+				) &&
+				child.declarationList.declarations[0].initializer &&
+				ts.isCallExpression(
+					child.declarationList.declarations[0].initializer
+				) &&
+				child.declarationList.declarations[0].initializer.expression.getText() ===
+					'require')
+		) {
 			if (lastDeclaration) {
 				let startIndex: number = child.getStart();
 				let endIndex: number = lastDeclaration.getEnd();
@@ -203,9 +240,21 @@ function findImportBlocks(
 					blocks.push([]);
 				}
 			}
-			blocks[blocks.length - 1].push(
-				getImportRanges(blocks, file.getFullText(), child)
-			);
+			const importPath = getImportPath(child);
+			if (importPath) {
+				blocks[blocks.length - 1].push(
+					getImportRanges(
+						blocks,
+						file.getFullText(),
+						child,
+						importPath,
+						!!(
+							ts.isImportDeclaration(child) &&
+							child.importClause?.isTypeOnly
+						)
+					)
+				);
+			}
 			lastDeclaration = child;
 		}
 	}

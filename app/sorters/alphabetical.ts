@@ -4,8 +4,8 @@ export function sortBlockAlphabetically(
 	declarations: ImportBlock
 ): ImportBlock {
 	return [...declarations].sort((a, b) => {
-		const aText = a.import.moduleSpecifier.getText();
-		const bText = b.import.moduleSpecifier.getText();
+		const aText = a.importPath;
+		const bText = b.importPath;
 
 		if (aText < bText) {
 			return -1;

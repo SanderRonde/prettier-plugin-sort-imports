@@ -3,7 +3,6 @@ import { IMPORT_TYPE, PrettierOptions } from '../types';
 import { resolveConfigFile } from 'prettier';
 import { builtinModules } from 'module';
 import * as path from 'path';
-import ts from 'typescript';
 import * as fs from 'fs';
 
 function getNPMPackages(
@@ -76,11 +75,7 @@ export type ImportTypeSorter =
 	| ((declarations: ImportBlock) => ImportBlockWithGroups);
 
 const builtinNodeModules = builtinModules.filter((m) => !m.startsWith('_'));
-function isNPMPackage(
-	npmPackages: string[],
-	tsImport: ts.ImportDeclaration
-): boolean {
-	const importPath = tsImport.moduleSpecifier.getText();
+function isNPMPackage(npmPackages: string[], importPath: string): boolean {
 	const importpathwithoutQuotes = importPath.slice(1, -1);
 	return [...npmPackages, ...builtinNodeModules].some((npmPackage) =>
 		importpathwithoutQuotes.startsWith(npmPackage)
@@ -141,9 +136,9 @@ export function generateImportSorter({
 			for (const singleImport of declarations) {
 				const importIsNPMPackageImport = isNPMPackage(
 					npmPackages,
-					singleImport.import
+					singleImport.importPath
 				);
-				if (singleImport.import.importClause?.isTypeOnly) {
+				if (singleImport.isTypeOnly) {
 					if (importIsNPMPackageImport) {
 						typeNpmImports.push(singleImport);
 					} else {
@@ -184,7 +179,7 @@ export function generateImportSorter({
 		const npmImports: SingleImport[] = [];
 
 		for (const singleImport of declarations) {
-			if (isNPMPackage(npmPackages, singleImport.import)) {
+			if (isNPMPackage(npmPackages, singleImport.importPath)) {
 				npmImports.push(singleImport);
 			} else {
 				localImports.push(singleImport);
