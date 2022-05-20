@@ -33,6 +33,11 @@ function getNPMPackages(
 					packages.push(packageName);
 				}
 			}
+			if (packageJSON.devDependencies) {
+				for (const packageName in packageJSON.devDependencies) {
+					packages.push(packageName);
+				}
+			}
 		} catch (e) {
 			console.warn('Failed to parse package.json file:', filePath);
 		}
