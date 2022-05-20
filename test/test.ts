@@ -679,3 +679,38 @@ test('also supports requires', (t) => {
 		expected
 	);
 });
+test('should take dev dependencies into account', (t) => {
+	const input = `import {} from 'prettier';
+import {} from 'aa';
+import {} from 'supertest';
+import {} from 'aaa';
+import {} from 'typescript';
+import {} from 'aaaa';
+import {} from 'ioredis';
+import {} from 'aaaaaaaaaaaaa';`;
+	const expected = `import {} from 'ioredis';
+import {} from 'prettier';
+import {} from 'supertest';
+import {} from 'typescript';
+
+import {} from 'aa';
+import {} from 'aaa';
+import {} from 'aaaa';
+import {} from 'aaaaaaaaaaaaa';`;
+	t.is(
+		transform(input, {
+			...defaultOptions,
+			sortingMethod: SORTING_TYPE.ALPHABETICAL,
+			packageJSONFiles: [
+				path.join(__dirname, './resources/testPackageWithDevDependencies.json'),
+			],
+			importTypeOrder: [
+				IMPORT_TYPE.NPM_PACKAGES,
+				IMPORT_TYPE.LOCAL_IMPORTS,
+			],
+			newlineBetweenTypes: true,
+			stripNewlines: true,
+		}),
+		expected
+	);
+});
