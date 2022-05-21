@@ -702,7 +702,10 @@ import {} from 'aaaaaaaaaaaaa';`;
 			...defaultOptions,
 			sortingMethod: SORTING_TYPE.ALPHABETICAL,
 			packageJSONFiles: [
-				path.join(__dirname, './resources/testPackageWithDevDependencies.json'),
+				path.join(
+					__dirname,
+					'./resources/testPackageWithDevDependencies.json'
+				),
 			],
 			importTypeOrder: [
 				IMPORT_TYPE.NPM_PACKAGES,
