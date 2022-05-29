@@ -30,6 +30,8 @@ export interface SingleImport {
 	import: TSImportStatement;
 	isTypeOnly: boolean;
 	importPath: string;
+	startLine: number;
+	endLine: number;
 	start: number;
 	end: number;
 }
@@ -73,44 +75,27 @@ function getImportRanges(
 ): SingleImport {
 	const currentBlock = blocks[blocks.length - 1];
 	const index = currentBlock.length;
-	let start = index === 0 ? tsImport.getStart() : tsImport.getFullStart();
-	if (index === 0 && tsImport.getFullStart() !== 0) {
-		start--;
-	}
+	let start = tsImport.getStart();
 	const leadingComment = getFirstLeadingComment(fullText, tsImport);
 	if (leadingComment && !commentIsIgnoreComment(fullText, leadingComment)) {
 		if (index !== 0) {
-			start = leadingComment.pos - 1;
+			start = leadingComment.pos;
 		}
 	}
 
-	const lastBlockChild = currentBlock[currentBlock.length - 1];
-	const prevLastComment =
-		lastBlockChild &&
-		getLastTrailingComment(fullText, lastBlockChild.import);
-	if (
-		lastBlockChild &&
-		prevLastComment &&
-		!commentIsIgnoreComment(fullText, prevLastComment)
-	) {
-		start =
-			prevLastComment.end +
-			~~(prevLastComment.hasTrailingNewLine ?? false);
-	}
-	let end = tsImport.getFullStart() + tsImport.getFullWidth();
+	let end = tsImport.end;
 	const lastComment = getLastTrailingComment(fullText, tsImport);
 	if (lastComment) {
 		end = lastComment.end;
-		if (lastComment.hasTrailingNewLine) {
-			end += 1;
-		}
 	}
 	return {
 		import: tsImport,
-		start: Math.max(start, 0),
+		start,
 		importPath,
 		end,
 		isTypeOnly,
+		startLine: lineAt(fullText, start),
+		endLine: lineAt(fullText, end),
 	};
 }
 
@@ -174,7 +159,7 @@ function findImportBlocks(
 			? file.getChildren()[0].getChildren()
 			: file.getChildren();
 
-	let lastDeclaration: TSImportStatement | null = null;
+	let lastBlock: SingleImport | null = null;
 	for (const child of rootChildren) {
 		if (
 			ts.isImportDeclaration(child) ||
@@ -191,122 +176,74 @@ function findImportBlocks(
 				child.declarationList.declarations[0].initializer.expression.getText() ===
 					'require')
 		) {
-			if (lastDeclaration) {
+			if (lastBlock) {
 				let startIndex: number = child.getStart();
-				let endIndex: number = lastDeclaration.getEnd();
+				const endIndex: number = lastBlock.end;
 				const leadingComments = ts.getLeadingCommentRanges(
 					file.getFullText(),
 					child.getFullStart()
-				);
-				const trailingComments = ts.getTrailingCommentRanges(
-					file.getFullText(),
-					lastDeclaration.getEnd()
 				);
 				if (leadingComments && leadingComments.length) {
 					// Has comments before it
 					startIndex = leadingComments[0].pos;
 				}
-				if (trailingComments && trailingComments.length) {
-					const lastTrailingComment =
-						trailingComments[trailingComments.length - 1];
-					endIndex = lastTrailingComment.end;
-				}
 				const textBetween = file
 					.getFullText()
 					.slice(endIndex, startIndex);
 
+				// Check if we should ignore this code
 				if (isInRange(startIndex, child.getEnd(), ignoredRanges)) {
-					// Ignore this
 					blocks.push([]);
-					lastDeclaration = child;
+					lastBlock = null;
 					continue;
 				}
 
-				if (stripNewlines) {
-					if (
-						textBetween
-							.split('')
-							.filter(
-								(c) => c !== '\n' && c !== '\t' && c !== ' '
-							).length > 0
-					) {
-						// non-newlines in between, new block
-						blocks.push([]);
-					}
-					// By just ignoring the newlines and not re-printing them
-					// we're getting rid of them
-				} else if (countStringAppearances(textBetween, '\n') > 1) {
+				// Check if there is a newline between this declaration and the last one
+				if (stripNewlines && textBetween.trim() !== '') {
+					blocks.push([]);
+				} else if (
+					!stripNewlines &&
+					countStringAppearances(textBetween, '\n') > 1
+				) {
 					// New block
 					blocks.push([]);
 				}
 			}
 			const importPath = getImportPath(child);
 			if (importPath) {
-				blocks[blocks.length - 1].push(
-					getImportRanges(
-						blocks,
-						file.getFullText(),
-						child,
-						importPath,
-						!!(
-							ts.isImportDeclaration(child) &&
-							child.importClause?.isTypeOnly
-						)
+				const newBlock = getImportRanges(
+					blocks,
+					file.getFullText(),
+					child,
+					importPath,
+					!!(
+						ts.isImportDeclaration(child) &&
+						child.importClause?.isTypeOnly
 					)
 				);
+				lastBlock = newBlock;
+				blocks[blocks.length - 1].push(newBlock);
+			} else {
+				lastBlock = null;
 			}
-			lastDeclaration = child;
 		}
 	}
 
 	return blocks.filter((block) => block.length > 0);
 }
 
-function transformLines(
-	lines: (string | typeof importNewline)[],
-	options: PrettierOptions
+function stripNewlines(
+	lines: (string | typeof importNewline)[]
 ): (string | typeof importNewline)[] {
-	return lines
-		.map((b) => {
-			if (b === importNewline) {
-				return b;
-			}
-			if (!b.startsWith('\n')) {
-				return `\n${b}`;
-			}
-			return b;
-		})
-		.map((b) => {
-			if (b === importNewline) {
-				return b;
-			}
-			if (options.stripNewlines) {
-				while (b.startsWith('\n')) {
-					b = b.slice(1);
-				}
-				return `\n${b}`;
-			}
-			return b;
-		})
-		.map((b) => {
-			if (b === importNewline) {
-				return b;
-			}
-			if (b.endsWith('\n')) {
-				return b.slice(0, -1);
-			}
-			return b;
-		});
-}
-
-function trimSpaces(line: string) {
-	while (line.startsWith(' ') || line.startsWith('\t')) {
-		line = line.slice(1);
-	}
-	while (line.endsWith(' ') || line.endsWith('\t')) {
-		line = line.slice(0, -1);
-	}
-	return line;
+	return lines.map((line) => {
+		if (line === importNewline) {
+			return line;
+		}
+		if (line.startsWith('\n')) {
+			return line.slice(1);
+		}
+		return line;
+	});
 }
 
 function sortBlockImports(
@@ -326,9 +263,18 @@ function sortBlockImports(
 			return sorterFunction(block);
 		}
 	});
+
+	// Filter out any empty groups
+	const filteredSorted = sorted.filter((group) => {
+		if (group instanceof OrderGroup) {
+			return group.values.filter((block) => block.length > 0).length > 0;
+		}
+		return group.length > 0;
+	});
+
 	let flattened: (SingleImport | typeof importNewline)[] = [];
-	for (let i = 0; i < sorted.length; i++) {
-		const sortedBlock = sorted[i];
+	for (let i = 0; i < filteredSorted.length; i++) {
+		const sortedBlock = filteredSorted[i];
 		if (sortedBlock instanceof OrderGroup) {
 			for (const subgroup of sortedBlock.values) {
 				flattened = flattened.concat(subgroup);
@@ -336,7 +282,7 @@ function sortBlockImports(
 		} else {
 			flattened = flattened.concat(sortedBlock as ImportBlock);
 		}
-		if (options.newlineBetweenTypes && i < sorted.length - 1) {
+		if (options.newlineBetweenTypes && i < filteredSorted.length - 1) {
 			flattened.push(importNewline);
 		}
 	}
@@ -355,39 +301,27 @@ function sortBlock(
 
 	const sorted = sortBlockImports(block, options, importTypeSorter);
 
-	const blockLines = transformLines(
-		sorted.map((s) =>
-			s === importNewline
-				? importNewline
-				: trimSpaces(fullText.slice(s.start, s.end))
-		),
-		options
-	).map((line) => (line === importNewline ? '\n' : line));
-	let blockText = blockLines.join('');
-	const lastBlock = block[block.length - 1];
-	let lastBlockEnd =
-		lastBlock.import.getFullStart() + lastBlock.import.getFullWidth();
-	const trailingComments = ts.getTrailingCommentRanges(
-		fullText,
-		lastBlockEnd
-	);
-	if (trailingComments) {
-		lastBlockEnd = trailingComments[trailingComments.length - 1].end;
-		if (trailingComments[trailingComments.length - 1].hasTrailingNewLine) {
-			if (!blockText.endsWith('\n')) {
-				blockText += '\n';
-			}
-			lastBlockEnd += 1;
+	const lines = fullText.split('\n');
+	let sortedLines: (string | typeof importNewline)[] = [];
+	for (const line of sorted) {
+		if (line === importNewline) {
+			sortedLines.push(line);
+		} else {
+			sortedLines.push(...lines.slice(line.startLine, line.endLine + 1));
 		}
 	}
-	if (block[0].import.getFullStart() === 0 && blockText.startsWith('\n')) {
-		blockText = blockText.slice(1);
+
+	if (options.stripNewlines) {
+		sortedLines = stripNewlines(sortedLines);
 	}
-	return (
-		fullText.slice(0, block[0].start) +
-		blockText +
-		fullText.slice(lastBlock.end)
+	const blockLines = sortedLines.map((line) =>
+		line === importNewline ? '' : line
 	);
+	return [
+		...lines.slice(0, block[0].startLine),
+		...blockLines,
+		...lines.slice(block[block.length - 1].endLine + 1),
+	].join('\n');
 }
 
 interface IgnoredRange {
@@ -437,7 +371,7 @@ function lineAt(text: string, offset: number): number {
 	const lines = text.split('\n');
 	let currentOffset = 0;
 	for (let i = 0; i < lines.length; i++) {
-		const lineLength = lines[i].length;
+		const lineLength = lines[i].length + 1;
 		if (currentOffset + lineLength > offset) {
 			return i;
 		}
@@ -489,8 +423,15 @@ interface InitResult {
 
 let initResult: InitResult | null = null;
 let hasCacheClearTimer: boolean = false;
-function ensureInit(options: PrettierOptions): InitResult {
-	if (initResult && !process.argv.includes('--sort-imports-reinit')) {
+function ensureInit(
+	options: PrettierOptions,
+	clearCache: boolean = false
+): InitResult {
+	if (
+		initResult &&
+		!process.argv.includes('--sort-imports-reinit') &&
+		!clearCache
+	) {
 		return initResult;
 	}
 
@@ -512,7 +453,11 @@ function ensureInit(options: PrettierOptions): InitResult {
 /**
  * Organize the imports
  */
-function sortImports(text: string, options: PrettierOptions) {
+function sortImports(
+	text: string,
+	options: PrettierOptions,
+	clearCache: boolean = false
+) {
 	if (
 		text.includes('// sort-imports-ignore') ||
 		text.includes('//sort-imports-ignore') ||
@@ -521,7 +466,7 @@ function sortImports(text: string, options: PrettierOptions) {
 		return text;
 	}
 
-	const initData = ensureInit(options);
+	const initData = ensureInit(options, clearCache);
 
 	const ignoredRanges = getIgnoredRanges(text);
 	if (ignoredRanges === null) {
@@ -550,14 +495,23 @@ function sortImports(text: string, options: PrettierOptions) {
 	return text;
 }
 
+interface DebugOptions {
+	clearCache?: boolean;
+}
+
 export const parsers = {
 	typescript: {
 		...typescriptParsers.typescript,
 		preprocess: typescriptParsers.typescript.preprocess
-			? (text: string, options: PrettierOptions) => {
+			? (
+					text: string,
+					options: PrettierOptions,
+					debugOptions?: DebugOptions
+			  ) => {
 					return sortImports(
 						typescriptParsers.typescript.preprocess!(text, options),
-						options
+						options,
+						debugOptions?.clearCache
 					);
 			  }
 			: sortImports,
