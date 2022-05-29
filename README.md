@@ -29,3 +29,9 @@ The plugin will be loaded by Prettier automatically. No configuration needed. It
 -   `newlineBetweenTypes`: `boolean`. Set to `false` by default. Determines whether a newline should be inserted between different import types.
 
 Files containing the string `// sort-imports-ignore` are skipped. You can also ignore sections by using `// sort-imports-begin-ignore` and `// sort-imports-end-ignore`.
+
+## Changelog
+
+### 1.7.0
+
+-   Rewrite newline re-ordering to be more robust
