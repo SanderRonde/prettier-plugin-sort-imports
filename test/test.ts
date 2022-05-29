@@ -311,7 +311,7 @@ test('skips files containing the ignore string', (t) => {
 });
 test('comments above imports stick to that import', (t) => {
 	const block = `import a from 'a';
-import ab from 'ab'; 
+import ab from 'ab';
 // some comment here
 import abc from 'abc';
 import abcd from 'abcd';`;
