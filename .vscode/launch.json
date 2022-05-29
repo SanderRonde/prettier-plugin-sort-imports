@@ -7,12 +7,33 @@
 		{
 			"type": "node",
 			"request": "launch",
-			"name": "Launch Program",
+			"name": "Debug",
 			"skipFiles": ["<node_internals>/**"],
 			"runtimeExecutable": "${workspaceFolder}/node_modules/.bin/ts-node",
 			"program": "${workspaceFolder}/test/debug.ts",
 			"runtimeArgs": ["-T"],
-			"args": ["test/demo.ts", "--strip-newlines"],
+			"args": ["test/demo.ts", "--strip-newlines", "test/demo.out.ts"],
+			"outFiles": ["${workspaceFolder}/**/*.js"]
+		},
+		{
+			"type": "node",
+			"request": "launch",
+			"name": "Debug last generated code input",
+			"skipFiles": ["<node_internals>/**"],
+			"runtimeExecutable": "${workspaceFolder}/node_modules/.bin/ts-node",
+			"program": "${workspaceFolder}/test/codeGenerationTest.ts",
+			"runtimeArgs": ["-T"],
+			"args": ["--run", "test/inconsistent.input.js"],
+			"outFiles": ["${workspaceFolder}/**/*.js"]
+		}, {
+			"type": "node",
+			"request": "launch",
+			"name": "Debug last generated code output",
+			"skipFiles": ["<node_internals>/**"],
+			"runtimeExecutable": "${workspaceFolder}/node_modules/.bin/ts-node",
+			"program": "${workspaceFolder}/test/codeGenerationTest.ts",
+			"runtimeArgs": ["-T"],
+			"args": ["--run", "test/inconsistent.output.js"],
 			"outFiles": ["${workspaceFolder}/**/*.js"]
 		}
 	]

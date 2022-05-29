@@ -5,3 +5,5 @@ node_modules
 **/*.d.ts
 
 test/demo.ts
+
+inconsistent.*
