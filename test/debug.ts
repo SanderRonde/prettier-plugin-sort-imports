@@ -32,12 +32,18 @@ async function main() {
 		options.stripNewlines = true;
 	}
 
-	console.log(
-		transform(
-			await fs.readFile(process.argv[2], { encoding: 'utf8' }),
-			options
-		)
+	const nonFlagArgs = process.argv
+		.slice(2)
+		.filter((arg) => !arg.startsWith('--'));
+	const transformed = transform(
+		await fs.readFile(nonFlagArgs[0], { encoding: 'utf8' }),
+		options
 	);
+	if (nonFlagArgs[1]) {
+		await fs.writeFile(nonFlagArgs[1], transformed, { encoding: 'utf8' });
+	} else {
+		console.log(transformed);
+	}
 }
 
 (async () => {
