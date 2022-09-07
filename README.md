@@ -15,6 +15,42 @@ npm install --save-dev prettier-plugin-sort-imports
 
 The plugin will be loaded by Prettier automatically. No configuration needed. It will sort by import statement length by default.
 
+### Add to Prettier Config
+1. Create a file named `prettier.config.js` in your project's root directory.
+2. Add the following contents:
+```js
+module.exports = {
+  "sortingMethod": "lineLength",
+  "pluginSearchDirs": ["./node_modules"],
+  "plugins": ["./node_modules/prettier-plugin-sort-imports"]
+};
+```
+
+### When using with `prettier-plugin-tailwindcss`
+1. Edit the contents of your `prettier.config.js` like this:
+```js
+const pluginSortImports = require("prettier-plugin-sort-imports");
+const pluginTailwindcss = require("prettier-plugin-tailwindcss");
+
+/** @type {import("prettier").Parser}  */
+const myParser = {
+  ...pluginSortImports.parsers.typescript,
+  parse: pluginTailwindcss.parsers.typescript.parse,
+};
+
+/** @type {import("prettier").Plugin}  */
+const myPlugin = {
+  parsers: {
+    typescript: myParser,
+  },
+};
+
+module.exports = {
+  plugins: [myPlugin],
+  // REST OF YOUR CUSTOM PRETTIER CONFIG GOES BELOW
+};
+```
+
 ### Options:
 
 -   `sortingMethod`: `'alphabetical' | 'lineLength' (default)` - What to sort the individual lines by. `alphabetical` sorts by the import path and `lineLength` sorts by the length of the import. Note that alphabetical sorting looks at the **whole** import path, so imports starting with `../` are ranked lower.
