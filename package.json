@@ -15,7 +15,9 @@
 		"ts-node": "^10.4.0"
 	},
 	"dependencies": {
-		"prettier": "^2.5.1",
+		"prettier": "^2.5.1"
+	},
+	"peerDependencies": {
 		"typescript": "^4.0.3"
 	},
 	"files": [
