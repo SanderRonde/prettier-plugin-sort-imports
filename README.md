@@ -32,6 +32,10 @@ Files containing the string `// sort-imports-ignore` are skipped. You can also i
 
 ## Changelog
 
+### 1.7.1
+
+-   Move the `typescript` dependency to peer dependencies
+
 ### 1.7.0
 
 -   Rewrite newline re-ordering to be more robust
