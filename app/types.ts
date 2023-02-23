@@ -5,6 +5,11 @@ export enum SORTING_TYPE {
 	ALPHABETICAL = 'alphabetical',
 }
 
+export enum SORTING_ORDER {
+	ASCENDING = 'ascending',
+	DESCENDING = 'descending',
+}
+
 export enum IMPORT_TYPE {
 	NPM_PACKAGES = 'NPMPackages',
 	VALUE = 'localImportsValue',
@@ -15,6 +20,7 @@ export enum IMPORT_TYPE {
 
 export interface PrettierOptions extends ParserOptions {
 	sortingMethod: SORTING_TYPE;
+	sortingOrder: SORTING_ORDER;
 	stripNewlines: boolean;
 	importTypeOrder: IMPORT_TYPE[];
 	packageJSONFiles: string[];

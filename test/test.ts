@@ -1,4 +1,9 @@
-import { IMPORT_TYPE, PrettierOptions, SORTING_TYPE } from '../app/types';
+import {
+	IMPORT_TYPE,
+	PrettierOptions,
+	SORTING_ORDER,
+	SORTING_TYPE,
+} from '../app/types';
 import { ParserOptions } from 'prettier';
 import * as path from 'path';
 import test from 'ava';
@@ -20,6 +25,7 @@ const defaultOptions: Omit<PrettierOptions, keyof ParserOptions> = {
 	importTypeOrder: [IMPORT_TYPE.ALL],
 	packageJSONFiles: ['package.json'],
 	sortingMethod: SORTING_TYPE.LINE_LENGTH,
+	sortingOrder: SORTING_ORDER.DESCENDING,
 	stripNewlines: false,
 	newlineBetweenTypes: false,
 };

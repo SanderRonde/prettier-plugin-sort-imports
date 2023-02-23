@@ -1,12 +1,19 @@
 import { ImportBlock } from '..';
+import { SORTING_ORDER } from '../types';
 
-export function sortBlockByLength(declarations: ImportBlock): ImportBlock {
+export function sortBlockByLength(
+	declarations: ImportBlock,
+	sortingOrder: string
+): ImportBlock {
 	return [...declarations].sort((a, b) => {
-		const aLength = a.import.getText().length;
-		const bLength = b.import.getText().length;
+		let aLength = a.import.getText().length;
+		let bLength = b.import.getText().length;
 		if (aLength === bLength && a.importPath && b.importPath) {
-			return b.importPath.length - a.importPath.length;
+			aLength = a.importPath.length;
+			bLength = b.importPath.length;
 		}
-		return bLength - aLength;
+		return sortingOrder === SORTING_ORDER.ASCENDING
+			? aLength - bLength
+			: bLength - aLength;
 	});
 }
