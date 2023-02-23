@@ -1,6 +1,6 @@
 {
-	"name": "prettier-plugin-sort-imports-v2",
-	"version": "1.7.1",
+	"name": "prettier-plugin-sort-imports",
+	"version": "1.7.2",
 	"description": "A prettier plugin for sorting imports by length",
 	"main": "dist/index.js",
 	"repository": "https://github.com/SanderRonde/prettier-plugin-sort-imports.git",
@@ -29,7 +29,7 @@
 		"bundle": "yarn bundle:dev --minify",
 		"bundle:dev": "esbuild --bundle --platform=node --external:typescript --external:prettier --outfile=dist/index.js app/index.ts",
 		"test": "yarn bundle:dev && ava test/test.ts -- -- --sort-imports-reinit",
-		"testDev": "ava test/test.ts -- -- --dev --sort-imports-reinit",
+		"test:dev": "ava test/test.ts -- -- --dev --sort-imports-reinit",
 		"prepack": "yarn format && tsc && yarn bundle",
 		"format": "prettier --write app test",
 		"codeGenerationTest": "ts-node -T test/codeGenerationTest.ts --test"
