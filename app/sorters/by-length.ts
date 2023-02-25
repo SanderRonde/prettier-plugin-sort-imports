@@ -3,7 +3,7 @@ import { SORTING_ORDER } from '../types';
 
 export function sortBlockByLength(
 	declarations: ImportBlock,
-	sortingOrder: string
+	sortingOrder: SORTING_ORDER
 ): ImportBlock {
 	return [...declarations].sort((a, b) => {
 		let aLength = a.import.getText().length;
