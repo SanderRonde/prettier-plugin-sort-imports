@@ -51,6 +51,10 @@ Files containing the string `// sort-imports-ignore` are skipped. You can also i
 
 ## Changelog
 
+### 1.7.2
+
+- Fix peer dependency version
+
 ### 1.7.0
 
 -   Rewrite newline re-ordering to be more robust
