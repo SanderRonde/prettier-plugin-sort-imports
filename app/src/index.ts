@@ -1,5 +1,3 @@
-import { parsers as typescriptParsers } from 'prettier/parser-typescript';
-import { parsers as babelParsers } from 'prettier/parser-babel';
 import { sortBlockAlphabetically } from './sorters/alphabetical';
 import { PrettierOptions, SORTING_TYPE } from './types';
 import { sortBlockByLength } from './sorters/by-length';
@@ -10,7 +8,7 @@ import {
 	ImportTypeSorter,
 	OrderGroup,
 } from './sorters/import-type';
-export { options } from './options';
+import { Parser } from 'prettier';
 
 const CACHE_REFRESH_INTERVAL = 1000 * 60 * 2.5;
 
@@ -499,17 +497,17 @@ interface DebugOptions {
 	clearCache?: boolean;
 }
 
-export const parsers = {
+export const getParsers = (typescriptParser: Parser, babelParser: Parser) => ({
 	typescript: {
-		...typescriptParsers.typescript,
-		preprocess: typescriptParsers.typescript.preprocess
+		...typescriptParser,
+		preprocess: typescriptParser.preprocess
 			? (
 					text: string,
 					options: PrettierOptions,
 					debugOptions?: DebugOptions
 				) => {
 					return sortImports(
-						typescriptParsers.typescript.preprocess!(text, options),
+						typescriptParser.preprocess!(text, options),
 						options,
 						debugOptions?.clearCache
 					);
@@ -517,14 +515,14 @@ export const parsers = {
 			: sortImports,
 	},
 	babel: {
-		...babelParsers.babel,
-		preprocess: babelParsers.babel.preprocess
+		...babelParser,
+		preprocess: babelParser.preprocess
 			? (text: string, options: PrettierOptions) => {
 					return sortImports(
-						babelParsers.babel.preprocess!(text, options),
+						babelParser.preprocess!(text, options),
 						options
 					);
 				}
 			: sortImports,
 	},
-};
+});

@@ -1,4 +1,4 @@
-import { IMPORT_TYPE, PrettierOptions, SORTING_TYPE } from '../app/types';
+import { IMPORT_TYPE, PrettierOptions, SORTING_TYPE } from '../app/src/types';
 import { ParserOptions } from 'prettier';
 import * as path from 'path';
 import test from 'ava';

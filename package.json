@@ -12,7 +12,7 @@
 		"ava": "^5.0.1",
 		"esbuild": "^0.14.11",
 		"swc": "^1.0.11",
-		"ts-node": "^10.9.1",
+		"ts-node": "^10.9.2",
 		"typescript": "^4.0.3"
 	},
 	"dependencies": {
@@ -26,8 +26,8 @@
 	],
 	"scripts": {
 		"prepublish": "yarn prepack",
-		"bundle": "yarn bundle:dev --minify",
-		"bundle:dev": "esbuild --bundle --platform=node --external:typescript --external:prettier --outfile=dist/index.js app/index.ts",
+		"bundle": "esbuild --bundle --platform=node --external:typescript --external:prettier --outfile=dist/index.js app/index.ts --minify && esbuild --bundle --platform=node --external:typescript --external:prettier --outfile=dist/index.2.js app/index.2.ts --minify && esbuild --bundle --platform=node --external:typescript --external:prettier --outfile=dist/index.3.js app/index.3.ts --minify",
+		"bundle:dev": "esbuild --bundle --platform=node --external:typescript --external:prettier --outfile=dist/index.js app/index.ts && esbuild --bundle --platform=node --external:typescript --external:prettier --outfile=dist/index.2.js app/index.2.ts && esbuild --bundle --platform=node --external:typescript --external:prettier --outfile=dist/index.3.js app/index.3.ts",
 		"test": "yarn bundle:dev && ava test/test.ts -- -- --sort-imports-reinit",
 		"testDev": "ava test/test.ts -- -- --dev --sort-imports-reinit",
 		"prepack": "yarn format && tsc && yarn bundle",

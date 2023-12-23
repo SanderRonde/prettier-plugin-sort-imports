@@ -1,7 +1,7 @@
 import { ParserOptions } from 'prettier';
 import * as fsSync from 'fs';
 import * as fs from 'fs/promises';
-import { IMPORT_TYPE, PrettierOptions, SORTING_TYPE } from '../app/types';
+import { IMPORT_TYPE, PrettierOptions, SORTING_TYPE } from '../app/src/types';
 import * as path from 'path';
 
 const app = require('../app/index') as {
