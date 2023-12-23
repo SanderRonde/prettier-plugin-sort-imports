@@ -1,7 +1,12 @@
 import { ParserOptions } from 'prettier';
 import * as fsSync from 'fs';
 import * as fs from 'fs/promises';
-import { IMPORT_TYPE, PrettierOptions, SORTING_TYPE } from '../app/types';
+import {
+	IMPORT_TYPE,
+	PrettierOptions,
+	SORTING_ORDER,
+	SORTING_TYPE,
+} from '../app/types';
 import * as path from 'path';
 
 const app = require('../app/index') as {
@@ -293,6 +298,10 @@ namespace GenerateConfig {
 			sortingMethod: Util.randomItem([
 				SORTING_TYPE.ALPHABETICAL,
 				SORTING_TYPE.LINE_LENGTH,
+			]),
+			sortingOrder: Util.randomItem([
+				SORTING_ORDER.ASCENDING,
+				SORTING_ORDER.DESCENDING,
 			]),
 			packageJSONFiles: ['package.json'],
 			importTypeOrder: generateValidImportTypeOrder(),

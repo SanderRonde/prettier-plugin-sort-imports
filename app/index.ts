@@ -252,10 +252,12 @@ function sortBlockImports(
 	importTypeSorter: ImportTypeSorter
 ) {
 	const presorted = importTypeSorter ? importTypeSorter(block) : [block];
-	const sorterFunction =
-		options.sortingMethod === SORTING_TYPE.ALPHABETICAL
-			? sortBlockAlphabetically
-			: sortBlockByLength;
+	const sorterFunction = (block: ImportBlock) => {
+		return options.sortingMethod === SORTING_TYPE.ALPHABETICAL
+			? sortBlockAlphabetically(block)
+			: sortBlockByLength(block, options.sortingOrder);
+	};
+
 	const sorted = presorted.map((block) => {
 		if (block instanceof OrderGroup) {
 			return new OrderGroup(block.values.map(sorterFunction));
