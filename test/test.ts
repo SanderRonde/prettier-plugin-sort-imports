@@ -2,9 +2,9 @@ import { IMPORT_TYPE, PrettierOptions, SORTING_TYPE } from '../app/types';
 import { ParserOptions } from 'prettier';
 import * as path from 'path';
 import test from 'ava';
-const app = require(process.argv.includes('--dev')
-	? '../app/index'
-	: '../dist/index') as {
+const app = require(
+	process.argv.includes('--dev') ? '../app/index' : '../dist/index'
+) as {
 	parsers: {
 		typescript: {
 			preprocess: (text: string, options: any) => string;

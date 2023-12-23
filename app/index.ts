@@ -507,13 +507,13 @@ export const parsers = {
 					text: string,
 					options: PrettierOptions,
 					debugOptions?: DebugOptions
-			  ) => {
+				) => {
 					return sortImports(
 						typescriptParsers.typescript.preprocess!(text, options),
 						options,
 						debugOptions?.clearCache
 					);
-			  }
+				}
 			: sortImports,
 	},
 	babel: {
@@ -524,7 +524,7 @@ export const parsers = {
 						babelParsers.babel.preprocess!(text, options),
 						options
 					);
-			  }
+				}
 			: sortImports,
 	},
 };
