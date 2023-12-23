@@ -24,7 +24,7 @@ The plugin will be loaded by Prettier automatically. No configuration needed. It
 module.exports = {
 	sortingMethod: 'lineLength',
 	pluginSearchDirs: ['./node_modules'], // No longer needed as of Prettier 3
-	plugins: ['./node_modules/prettier-plugin-sort-imports'], // Required as of Prettier 3!
+	plugins: ['./node_modules/prettier-plugin-sort-imports/dist/index.js'], // Required as of Prettier 3!
 };
 ```
 
