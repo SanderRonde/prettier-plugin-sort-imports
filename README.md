@@ -22,18 +22,18 @@ The plugin will be loaded by Prettier automatically. No configuration needed. It
 
 ```js
 module.exports = {
-    // For prettier 3
+	// For prettier 3
 	sortingMethod: 'lineLength',
-    plugins: ['./node_modules/prettier-plugin-sort-imports/dist/index.js'],
+	plugins: ['./node_modules/prettier-plugin-sort-imports/dist/index.js'],
 };
 ```
 
 ```js
 module.exports = {
-    // For prettier 2
+	// For prettier 2
 	sortingMethod: 'lineLength',
 	pluginSearchDirs: ['./node_modules'],
-    plugins: ['./node_modules/prettier-plugin-sort-imports/dist/index.2.js'],
+	plugins: ['./node_modules/prettier-plugin-sort-imports/dist/index.2.js'],
 };
 ```
 
@@ -60,9 +60,13 @@ Files containing the string `// sort-imports-ignore` are skipped. You can also i
 
 ## Changelog
 
+### 1.8.1
+
+-   Fix bug where reading of `package.json` files was not try-catched
+
 ### 1.7.2
 
-- Fix peer dependency version
+-   Fix peer dependency version
 
 ### 1.7.0
 
