@@ -18,8 +18,8 @@ function getNPMPackages(packageJSONFiles: string[]): string[] {
 				return path.join(cwd, packageJSONFile);
 			}
 		})();
-		const packageText = fs.readFileSync(filePath, 'utf8');
 		try {
+			const packageText = fs.readFileSync(filePath, 'utf8');
 			const packageJSON = JSON.parse(packageText);
 			if (packageJSON.dependencies) {
 				for (const packageName in packageJSON.dependencies) {
@@ -32,7 +32,7 @@ function getNPMPackages(packageJSONFiles: string[]): string[] {
 				}
 			}
 		} catch (e) {
-			console.warn('Failed to parse package.json file:', filePath);
+			console.warn('Failed to read/parse package.json file:', filePath);
 		}
 	}
 	const uniquePackages = [...new Set(packages)];
