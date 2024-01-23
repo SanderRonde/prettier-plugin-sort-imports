@@ -55,9 +55,7 @@ function findPrettierConfig(filePath: string) {
 				'.prettierrc.toml',
 			]) {
 				const searchPath = path.join(searchDir, searchFile);
-				console.log(searchPath);
 				if (fs.existsSync(searchPath)) {
-					console.log('p=', searchPath);
 					return searchPath;
 				}
 			}
