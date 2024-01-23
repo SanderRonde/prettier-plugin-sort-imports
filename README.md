@@ -60,6 +60,10 @@ Files containing the string `// sort-imports-ignore` are skipped. You can also i
 
 ## Changelog
 
+### 1.8.2
+
+-   Fix bug where `package.json` files were not resolved relative to prettier config file but only to CWD
+
 ### 1.8.1
 
 -   Fix bug where reading of `package.json` files was not try-catched
