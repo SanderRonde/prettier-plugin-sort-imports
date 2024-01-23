@@ -3,8 +3,73 @@ import { IMPORT_TYPE, PrettierOptions } from '../types';
 import { builtinModules } from 'module';
 import * as path from 'path';
 import * as fs from 'fs';
+import * as os from 'os';
 
-function getNPMPackages(packageJSONFiles: string[]): string[] {
+function findPrettierConfig(filePath: string) {
+	const isDirectory = (path: string): boolean => {
+		try {
+			const stat = fs.statSync(path);
+			return stat.isDirectory();
+		} catch (e) {
+			if (e.code === 'ENOENT') {
+				return false;
+			}
+			throw e;
+		}
+	};
+
+	const dirs = (function* getGlobalDirs(): IterableIterator<string> {
+		const stopDir = path.resolve(os.homedir());
+		const startDir = path.dirname(path.resolve(filePath));
+		yield startDir;
+		let currentDir = startDir;
+		while (currentDir !== stopDir) {
+			const parentDir = path.dirname(currentDir);
+			if (parentDir === currentDir) {
+				break;
+			}
+
+			yield parentDir;
+			currentDir = parentDir;
+		}
+	})();
+
+	let currentDir = dirs.next();
+	if (currentDir.done) {
+		throw new Error();
+	}
+
+	for (const searchDir of dirs) {
+		/* istanbul ignore if -- @preserve */
+		if (isDirectory(searchDir)) {
+			for (const searchFile of [
+				'.prettierrc',
+				'.prettierrc.json',
+				'.prettierrc.json5',
+				'.prettierrc.yaml',
+				'.prettierrc.yml',
+				'.prettierrc.js',
+				'.prettierrc.cjs',
+				'prettier.config.js',
+				'prettier.config.cjs',
+				'.prettierrc.toml',
+			]) {
+				const searchPath = path.join(searchDir, searchFile);
+				console.log(searchPath);
+				if (fs.existsSync(searchPath)) {
+					console.log('p=', searchPath);
+					return searchPath;
+				}
+			}
+		}
+	}
+	return null;
+}
+
+function getNPMPackages(
+	formatFilePath: string,
+	packageJSONFiles: string[]
+): string[] {
 	const packages: string[] = [];
 
 	let rcFile: string | null | undefined = undefined;
@@ -14,7 +79,12 @@ function getNPMPackages(packageJSONFiles: string[]): string[] {
 			if (path.isAbsolute(packageJSONFile)) {
 				return packageJSONFile;
 			} else {
-				const cwd = rcFile ? path.dirname(rcFile) : procCwd;
+				const configFile = findPrettierConfig(formatFilePath);
+				if (configFile) {
+					rcFile = path.dirname(configFile);
+				}
+
+				const cwd = rcFile ?? procCwd;
 				return path.join(cwd, packageJSONFile);
 			}
 		})();
@@ -96,12 +166,13 @@ function firstIndex(...incides: number[]) {
 export function generateImportSorter({
 	importTypeOrder,
 	packageJSONFiles,
+	filepath,
 }: PrettierOptions): ImportTypeSorter {
 	if (importTypeOrder.includes(IMPORT_TYPE.ALL)) {
 		return undefined;
 	}
 
-	const npmPackages = getNPMPackages(packageJSONFiles);
+	const npmPackages = getNPMPackages(filepath, packageJSONFiles);
 	if (
 		importTypeOrder.includes(IMPORT_TYPE.VALUE) ||
 		importTypeOrder.includes(IMPORT_TYPE.TYPES)
