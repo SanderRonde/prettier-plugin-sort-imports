@@ -5,6 +5,8 @@ A prettier plugin that sorts import statements by either their length or alphabe
 Example:
 ![](./images/transform.png)
 
+![NPM Downloads](https://img.shields.io/npm/dt/prettier-plugin-sort-imports)
+
 ## Installation
 
 ```sh
