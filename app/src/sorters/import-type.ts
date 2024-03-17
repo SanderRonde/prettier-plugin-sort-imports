@@ -40,7 +40,6 @@ function findPrettierConfig(filePath: string) {
 	}
 
 	for (const searchDir of dirs) {
-		/* istanbul ignore if -- @preserve */
 		if (isDirectory(searchDir)) {
 			for (const searchFile of [
 				'.prettierrc',
@@ -50,8 +49,10 @@ function findPrettierConfig(filePath: string) {
 				'.prettierrc.yml',
 				'.prettierrc.js',
 				'.prettierrc.cjs',
+				'.prettierrc.mjs',
 				'prettier.config.js',
 				'prettier.config.cjs',
+				'prettier.config.mjs',
 				'.prettierrc.toml',
 			]) {
 				const searchPath = path.join(searchDir, searchFile);
