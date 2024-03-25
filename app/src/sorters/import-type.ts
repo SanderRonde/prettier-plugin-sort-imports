@@ -1,5 +1,5 @@
 import { ImportBlock, ImportBlockWithGroups, SingleImport } from '..';
-import { IMPORT_TYPE, PrettierOptions } from '../types';
+import { IMPORT_TYPE, PrettierOptions, SORTING_TYPE } from '../types';
 import { builtinModules } from 'module';
 import * as path from 'path';
 import * as fs from 'fs';
@@ -166,6 +166,8 @@ export function generateImportSorter({
 	importTypeOrder,
 	packageJSONFiles,
 	filepath,
+	sortingMethod,
+	newlineBetweenTypes,
 }: PrettierOptions): ImportTypeSorter {
 	if (importTypeOrder.includes(IMPORT_TYPE.ALL)) {
 		return undefined;
@@ -218,6 +220,19 @@ export function generateImportSorter({
 						valueImports.push(singleImport);
 					}
 				}
+			}
+
+			if (
+				sortingMethod === SORTING_TYPE.LINE_LENGTH &&
+				newlineBetweenTypes
+			) {
+				// When sorting by line length, keeping the distinction
+				// between groups looks weird. Do away with it.
+				return concatter(
+					valueImports,
+					[...typeNpmImports, ...typeImports],
+					npmImports
+				);
 			}
 
 			return concatter(
