@@ -62,6 +62,10 @@ Files containing the string `// sort-imports-ignore` are skipped. You can also i
 
 ## Changelog
 
+### 1.8.5
+
+-   When sorting by line length, adjecent subgroups are also sorted together
+
 ### 1.8.4
 
 -   Add `.prettierrc.mjs` and `prettier.config.mjs` to the list of possible config files
