@@ -37,7 +37,8 @@
 			"ts"
 		],
 		"nodeArguments": [
-			"--loader=ts-node/esm"
+			"-r",
+			"ts-node/register"
 		]
 	}
 }
