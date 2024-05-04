@@ -497,32 +497,53 @@ interface DebugOptions {
 	clearCache?: boolean;
 }
 
-export const getParsers = (typescriptParser: Parser, babelParser: Parser) => ({
-	typescript: {
-		...typescriptParser,
-		preprocess: typescriptParser.preprocess
-			? (
-					text: string,
-					options: PrettierOptions,
-					debugOptions?: DebugOptions
-				) => {
-					return sortImports(
-						typescriptParser.preprocess!(text, options),
-						options,
-						debugOptions?.clearCache
-					);
-				}
-			: sortImports,
-	},
-	babel: {
-		...babelParser,
-		preprocess: babelParser.preprocess
-			? (text: string, options: PrettierOptions) => {
-					return sortImports(
-						babelParser.preprocess!(text, options),
-						options
-					);
-				}
-			: sortImports,
-	},
-});
+export const getParsers = (parsers: { typescript: Parser; babel: Parser }) => {
+	const tryParse = (
+		importPath: string
+	): {
+		parsers: {
+			[key: string]: Parser;
+		};
+	} | null => {
+		try {
+			return require(importPath);
+		} catch {
+			return null;
+		}
+	};
+
+	const overridePreprocess = (parser: Parser) => {
+		if (!parser.preprocess) {
+			return sortImports;
+		}
+		return (
+			text: string,
+			options: PrettierOptions,
+			debugOptions?: DebugOptions
+		) => {
+			return sortImports(
+				parser.preprocess!(text, options),
+				options,
+				debugOptions?.clearCache
+			);
+		};
+	};
+
+	const overrideIfSet = (parser: Parser | undefined) => {
+		if (!parser) {
+			return undefined;
+		}
+		return {
+			...parser,
+			preprocess: overridePreprocess(parser),
+		};
+	};
+
+	return {
+		typescript: overrideIfSet(parsers.typescript),
+		babel: overrideIfSet(parsers.babel),
+		svelte: overrideIfSet(
+			tryParse('prettier-plugin-svelte')?.parsers.svelte
+		),
+	};
+};

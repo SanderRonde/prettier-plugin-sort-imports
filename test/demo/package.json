@@ -1,0 +1,13 @@
+{
+	"name": "demo",
+	"version": "1.0.0",
+	"main": "index.js",
+	"license": "MIT",
+	"devDependencies": {
+		"prettier": "^3.2.5",
+		"svelte": "^4.2.15"
+	},
+	"dependencies": {
+		"prettier-plugin-svelte": "^3.2.3"
+	}
+}
