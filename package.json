@@ -19,6 +19,14 @@
 	"peerDependencies": {
 		"typescript": ">4.0.0"
 	},
+	"keywords": [
+		"prettier",
+		"plugin",
+		"sort",
+		"import",
+		"typescript",
+		"javascript"
+	],
 	"files": [
 		"dist/**"
 	],
