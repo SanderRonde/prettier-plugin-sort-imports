@@ -63,7 +63,7 @@ Files containing the string `// sort-imports-ignore` are skipped. You can also i
 
 ## Changelog
 
-### 1.8.6
+### 1.8.7
 
 -   Add `sortingOrder` option to sort imports in ascending or descending order
 
