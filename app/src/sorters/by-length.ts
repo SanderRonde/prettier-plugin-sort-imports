@@ -1,12 +1,16 @@
 import { ImportBlock } from '..';
 
 export function sortBlockByLength(declarations: ImportBlock): ImportBlock {
-	return [...declarations].sort((a, b) => {
-		const aLength = a.import.getText().length;
-		const bLength = b.import.getText().length;
+	const sorted = [...declarations].sort((a, b) => {
+		let aLength = a.import.getText().length;
+		let bLength = b.import.getText().length;
 		if (aLength === bLength && a.importPath && b.importPath) {
-			return b.importPath.length - a.importPath.length;
+			aLength = a.importPath.length;
+			bLength = b.importPath.length;
 		}
+		// Always sort in descending order (larger values first)
 		return bLength - aLength;
 	});
+
+	return sorted;
 }

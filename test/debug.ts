@@ -1,5 +1,9 @@
-import { IMPORT_TYPE, PrettierOptions, SORTING_TYPE } from '../app/src/types';
-import { ParserOptions } from 'prettier';
+import {
+	IMPORT_TYPE,
+	PluginSortImportsOptions,
+	SORTING_ORDER,
+	SORTING_TYPE,
+} from '../app/src/types';
 import * as fs from 'fs/promises';
 
 const app = require('../app/index') as {
@@ -17,8 +21,9 @@ async function main() {
 		process.exit(1);
 	}
 
-	const options: Omit<PrettierOptions, keyof ParserOptions> = {
+	const options: PluginSortImportsOptions = {
 		sortingMethod: SORTING_TYPE.LINE_LENGTH,
+		sortingOrder: SORTING_ORDER.DESCENDING,
 		stripNewlines: false,
 		importTypeOrder: [IMPORT_TYPE.ALL],
 		packageJSONFiles: ['package.json'],

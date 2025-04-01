@@ -1,5 +1,5 @@
 import { sortBlockAlphabetically } from './sorters/alphabetical';
-import { PrettierOptions, SORTING_TYPE } from './types';
+import { PrettierOptions, SORTING_ORDER, SORTING_TYPE } from './types';
 import { sortBlockByLength } from './sorters/by-length';
 import * as ts from 'typescript';
 import { validateOptions } from './options';
@@ -250,10 +250,15 @@ function sortBlockImports(
 	importTypeSorter: ImportTypeSorter
 ) {
 	const presorted = importTypeSorter ? importTypeSorter(block) : [block];
-	const sorterFunction =
+	const initialSorterFunction =
 		options.sortingMethod === SORTING_TYPE.ALPHABETICAL
 			? sortBlockAlphabetically
 			: sortBlockByLength;
+	const sorterFunction =
+		options.sortingOrder === SORTING_ORDER.ASCENDING
+			? (block: ImportBlock) => initialSorterFunction(block).reverse()
+			: initialSorterFunction;
+
 	const sorted = presorted.map((block) => {
 		if (block instanceof OrderGroup) {
 			return new OrderGroup(block.values.map(sorterFunction));

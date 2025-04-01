@@ -1,4 +1,9 @@
-import { IMPORT_TYPE, PrettierOptions, SORTING_TYPE } from './types';
+import {
+	IMPORT_TYPE,
+	PrettierOptions,
+	SORTING_TYPE,
+	SORTING_ORDER,
+} from './types';
 import { ParserOptions } from 'prettier';
 
 function validateImportTypeOrderOptions(
@@ -74,6 +79,23 @@ export const options: {
 			{
 				value: SORTING_TYPE.LINE_LENGTH,
 				description: 'Sort by line length, descending',
+			},
+		],
+	},
+	sortingOrder: {
+		since: '1.15.0',
+		category: 'Global',
+		type: 'choice',
+		default: SORTING_ORDER.DESCENDING,
+		description: 'Which sorting order to use (default descending)',
+		choices: [
+			{
+				value: SORTING_ORDER.ASCENDING,
+				description: 'Sort imports in ascending order',
+			},
+			{
+				value: SORTING_ORDER.DESCENDING,
+				description: 'Sort imports in descending order',
 			},
 		],
 	},

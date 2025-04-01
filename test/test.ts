@@ -1,4 +1,9 @@
-import { IMPORT_TYPE, PrettierOptions, SORTING_TYPE } from '../app/src/types';
+import {
+	IMPORT_TYPE,
+	PrettierOptions,
+	SORTING_ORDER,
+	SORTING_TYPE,
+} from '../app/src/types';
 import { ParserOptions } from 'prettier';
 import * as path from 'path';
 import test from 'ava';
@@ -20,6 +25,7 @@ const defaultOptions: Omit<PrettierOptions, keyof ParserOptions> = {
 	importTypeOrder: [IMPORT_TYPE.ALL],
 	packageJSONFiles: ['package.json'],
 	sortingMethod: SORTING_TYPE.LINE_LENGTH,
+	sortingOrder: SORTING_ORDER.DESCENDING,
 	stripNewlines: false,
 	newlineBetweenTypes: false,
 };
@@ -111,6 +117,36 @@ test('sorts a single block of imports by length', (t) => {
 
 	t.is(transform(input, defaultOptions), expected);
 });
+test('sorts a single block of imports by length in ascending order', (t) => {
+	const objArr = [
+		{
+			importPath: 'a',
+			statement: 'a',
+		},
+		{
+			importPath: 'ab',
+			statement: 'ab',
+		},
+		{
+			importPath: 'abc',
+			statement: 'abc',
+		},
+		{
+			importPath: 'abcd',
+			statement: 'abcd',
+		},
+	];
+	const input = createImports(objArr);
+	const expected = createImports(sortArr(objArr).reverse());
+
+	t.is(
+		transform(input, {
+			...defaultOptions,
+			sortingOrder: SORTING_ORDER.ASCENDING,
+		}),
+		expected
+	);
+});
 test('sorts a single block of imports alphabetically', (t) => {
 	const objArr = [
 		{
@@ -137,6 +173,37 @@ test('sorts a single block of imports alphabetically', (t) => {
 		transform(input, {
 			...defaultOptions,
 			sortingMethod: SORTING_TYPE.ALPHABETICAL,
+		}),
+		expected
+	);
+});
+test('sorts a single block of imports alphabetically in ascending order', (t) => {
+	const objArr = [
+		{
+			importPath: 'd',
+			statement: 'a',
+		},
+		{
+			importPath: 'c',
+			statement: 'ab',
+		},
+		{
+			importPath: 'a',
+			statement: 'abc',
+		},
+		{
+			importPath: 'b',
+			statement: 'abcd',
+		},
+	];
+	const input = createImports(objArr);
+	const expected = createImports(sortArrAlphabetically(objArr).reverse());
+
+	t.is(
+		transform(input, {
+			...defaultOptions,
+			sortingMethod: SORTING_TYPE.ALPHABETICAL,
+			sortingOrder: SORTING_ORDER.ASCENDING,
 		}),
 		expected
 	);
