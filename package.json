@@ -35,7 +35,7 @@
 		"bundle": "esbuild --bundle --platform=node --external:typescript --external:prettier --outfile=dist/index.js app/index.ts --minify && esbuild --bundle --platform=node --external:typescript --external:prettier --outfile=dist/index.2.js app/index.2.ts --minify && esbuild --bundle --platform=node --external:typescript --external:prettier --outfile=dist/index.3.js app/index.3.ts --minify",
 		"bundle:dev": "esbuild --bundle --platform=node --external:typescript --external:prettier --outfile=dist/index.js app/index.ts && esbuild --bundle --platform=node --external:typescript --external:prettier --outfile=dist/index.2.js app/index.2.ts && esbuild --bundle --platform=node --external:typescript --external:prettier --outfile=dist/index.3.js app/index.3.ts",
 		"test": "yarn bundle:dev && ava test/test.ts -- -- --sort-imports-reinit",
-		"testDev": "ava test/test.ts -- -- --dev --sort-imports-reinit",
+		"test:dev": "ava test/test.ts -- -- --dev --sort-imports-reinit",
 		"prepack": "yarn format && tsc && yarn bundle",
 		"format": "prettier --write app test",
 		"codeGenerationTest": "ts-node -T test/codeGenerationTest.ts --test"
