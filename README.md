@@ -63,6 +63,10 @@ Files containing the string `// sort-imports-ignore` are skipped. You can also i
 
 ## Changelog
 
+### 1.8.6
+
+-   Add `sortingOrder` option to sort imports in ascending or descending order
+
 ### 1.8.5
 
 -   When sorting by line length, adjecent subgroups are also sorted together
