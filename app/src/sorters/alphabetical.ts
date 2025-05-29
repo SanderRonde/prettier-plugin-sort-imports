@@ -1,5 +1,14 @@
 import { ImportBlock } from '..';
 
+export function sortAlphabetically(a: string, b: string) {
+	if (a < b) {
+		return -1;
+	} else if (a > b) {
+		return 1;
+	}
+	return 0;
+}
+
 export function sortBlockAlphabetically(
 	declarations: ImportBlock
 ): ImportBlock {
@@ -7,11 +16,6 @@ export function sortBlockAlphabetically(
 		const aText = a.importPath;
 		const bText = b.importPath;
 
-		if (aText < bText) {
-			return -1;
-		} else if (aText > bText) {
-			return 1;
-		}
-		return 0;
+		return sortAlphabetically(aText, bText);
 	});
 }

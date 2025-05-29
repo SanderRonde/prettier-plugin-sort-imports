@@ -1,4 +1,5 @@
 import { ImportBlock } from '..';
+import { sortAlphabetically } from './alphabetical';
 
 export function sortBlockByLength(declarations: ImportBlock): ImportBlock {
 	const sorted = [...declarations].sort((a, b) => {
@@ -9,7 +10,9 @@ export function sortBlockByLength(declarations: ImportBlock): ImportBlock {
 			bLength = b.importPath.length;
 		}
 		// Always sort in descending order (larger values first)
-		return bLength - aLength;
+		return (
+			bLength - aLength || sortAlphabetically(b.importPath, a.importPath)
+		);
 	});
 
 	return sorted;
