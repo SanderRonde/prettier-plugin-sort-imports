@@ -1,5 +1,5 @@
-import { ImportBlock } from '..';
 import { sortAlphabetically } from './alphabetical';
+import { ImportBlock } from '..';
 
 export function sortBlockByLength(declarations: ImportBlock): ImportBlock {
 	const sorted = [...declarations].sort((a, b) => {
