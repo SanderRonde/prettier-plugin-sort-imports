@@ -253,7 +253,8 @@ function sortBlockImports(
 	const initialSorterFunction =
 		options.sortingMethod === SORTING_TYPE.ALPHABETICAL
 			? sortBlockAlphabetically
-			: sortBlockByLength;
+			: (block: ImportBlock) =>
+					sortBlockByLength(block, options.sortingOrder);
 	const sorterFunction =
 		options.sortingOrder === SORTING_ORDER.ASCENDING
 			? (block: ImportBlock) => initialSorterFunction(block).reverse()

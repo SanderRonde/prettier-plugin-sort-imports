@@ -356,6 +356,28 @@ test('sorts by import length if full length is the same', (t) => {
 
 	t.is(transform(input, defaultOptions), expected);
 });
+test('sorts same-length value and type imports from same path stably (lineLength ascending)', (t) => {
+	const input = `import { useRef, useEffect } from "react";
+import type { ReactElement } from "react";
+`;
+	const options = {
+		...defaultOptions,
+		sortingMethod: SORTING_TYPE.LINE_LENGTH,
+		sortingOrder: SORTING_ORDER.ASCENDING,
+		stripNewlines: true,
+		importTypeOrder: [IMPORT_TYPE.ALL],
+	};
+	const expected = `import { useRef, useEffect } from "react";
+import type { ReactElement } from "react";
+`;
+	const result = transform(input, options);
+	t.is(result, expected);
+	t.is(
+		transform(result, options),
+		result,
+		'idempotent: second run yields same output'
+	);
+});
 test('skips files containing the ignore string', (t) => {
 	const objArr = [
 		{
