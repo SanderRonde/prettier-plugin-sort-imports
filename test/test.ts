@@ -562,6 +562,29 @@ import {} from 'aa';`;
 		expected
 	);
 });
+test('treats bun as builtin package', (t) => {
+	const input = `import {} from 'aa';
+import {} from 'bun';
+import {} from 'aaa';
+import {} from './local';`;
+	const expected = `import {} from 'bun';
+import {} from './local';
+import {} from 'aaa';
+import {} from 'aa';`;
+	t.is(
+		transform(input, {
+			...defaultOptions,
+			packageJSONFiles: [
+				path.join(__dirname, './resources/testPackage1.json'),
+			],
+			importTypeOrder: [
+				IMPORT_TYPE.NPM_PACKAGES,
+				IMPORT_TYPE.LOCAL_IMPORTS,
+			],
+		}),
+		expected
+	);
+});
 test('sorts depending on passed order', (t) => {
 	const input = `import {} from 'prettier';
 import {} from 'aa';

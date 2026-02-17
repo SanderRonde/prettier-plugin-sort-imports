@@ -141,7 +141,15 @@ export type ImportTypeSorter =
 	| undefined
 	| ((declarations: ImportBlock) => ImportBlockWithGroups);
 
-const builtinNodeModules = builtinModules.filter((m) => !m.startsWith('_'));
+// Bun is always a builtin. There are some setups where sometimes prettier is ran
+// via bun and sometimes via node. Bun reports itself as a builtin module when ran
+// with bun but not when ran with node, leading to inconsistent behavior.
+// Since there are no projects where bun is imported as an external dependency,
+// listing it as a builtin module is safe.
+const builtinNodeModules = [
+	...builtinModules.filter((m) => !m.startsWith('_')),
+	'bun',
+];
 function isNPMPackage(npmPackages: string[], importPath: string): boolean {
 	const importpathwithoutQuotes = importPath.slice(1, -1);
 	return [...npmPackages, ...builtinNodeModules].some((npmPackage) =>
